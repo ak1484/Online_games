@@ -59,3 +59,10 @@ See `docs/deployment-guide.md` and `docs/multiplayer-design.md` for full steps.
 - `orchestrator-agent` plans deployment and free infrastructure.
 - `game-creator-agent` builds game prototypes and local testing.
 - `qa-agent` is optional and may be added later for quality review.
+
+## Development demo database
+
+- **Purpose**: A local developer/demo Firebase config is included for convenience when building prototypes and running agents that need a shared dev database.
+- **File**: infra/demo_database_config.json (keep this file local; it is ignored by Git).
+- **Usage**: Copy the `firebase` object values into `dev/multiplayer-room/firebase-config.js` for local testing, or configure your local agents to read the JSON when running in `development` mode.
+- **Security**: This file contains project credentials for a development/testing Firebase project — do not commit it to source control or expose it in production.
