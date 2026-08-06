@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
 import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-import { firebaseConfig } from './firebase-config.js';
+import { loadFirebaseConfig } from './firebase-loader.js';
 
 const createRoomButton = document.getElementById('create-room');
 const joinRoomButton = document.getElementById('join-room');
@@ -13,9 +13,9 @@ const currentRoom = document.getElementById('current-room');
 const playerCount = document.getElementById('player-count');
 const board = document.getElementById('board');
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+let app = null;
+let db = null;
+let auth = null;
 
 let room = null;
 let players = [];
@@ -198,5 +198,18 @@ createRoomButton.addEventListener('click', createRoom);
 joinRoomButton.addEventListener('click', joinRoom);
 leaveRoomButton.addEventListener('click', leaveRoom);
 
-createBoard();
-init();
+async function main() {
+  const cfg = await loadFirebaseConfig();
+  app = initializeApp(cfg);
+  db = getFirestore(app);
+  auth = getAuth(app);
+
+  createBoard();
+  createRoomButton.addEventListener('click', createRoom);
+  joinRoomButton.addEventListener('click', joinRoom);
+  leaveRoomButton.addEventListener('click', leaveRoom);
+
+  await init();
+}
+
+main();
