@@ -7,4 +7,6 @@ Recommended free hosting and services:
 
 Notes:
 - Keep dependencies small and use static assets where possible
+- Use serverless functions for room/session creation and backend validation
+- Use realtime services sparingly for live multiplayer data
 - Use environment variables sparingly and track them in `.env` only if needed

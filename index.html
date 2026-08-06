@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Online Games Project</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #2f2f48, #090b10);
+      color: #f7fafc;
+    }
+    .container {
+      max-width: 720px;
+      width: 100%;
+      padding: 32px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 24px;
+      box-shadow: 0 26px 80px rgba(0, 0, 0, 0.35);
+    }
+    h1 {
+      margin-top: 0;
+      font-size: clamp(2rem, 2.5vw, 3rem);
+    }
+    p {
+      line-height: 1.7;
+      color: #cbd5e1;
+    }
+    ul {
+      padding-left: 1.25rem;
+    }
+    a {
+      color: #7dd3fc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .links {
+      margin-top: 24px;
+      display: grid;
+      gap: 12px;
+    }
+    .link-card {
+      padding: 16px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      border-radius: 16px;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Online Games Project</h1>
+    <p>This repository contains an online game hub prototype. Use the links below to open the current game prototypes.</p>
+    <div class="links">
+      <div class="link-card">
+        <h2>Single-player game</h2>
+        <p><a href="dev/coin-collector/index.html">Open Coin Collector</a></p>
+      </div>
+      <div class="link-card">
+        <h2>Multiplayer prototype</h2>
+        <p><a href="dev/multiplayer-room/index.html">Open Multiplayer Room</a></p>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

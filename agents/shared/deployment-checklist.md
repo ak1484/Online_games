@@ -7,3 +7,5 @@
 - [ ] Production game folder is created in `prod_games/`
 - [ ] Live URL is recorded
 - [ ] Post-release feedback process is defined
+- [ ] Multiplayer room/session workflow is defined (if applicable)
+- [ ] Session backend and realtime sync path are documented

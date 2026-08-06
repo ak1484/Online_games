@@ -22,7 +22,12 @@ TL;DR - Create a cleaner, more productive agent environment for `c:\Users\ankit\
    - each agent works from shared markdown artifacts instead of tightly coupled code flows.
    - `main-agent` consumes status logs and decides remediation rather than re-running agent logic.
    - `orchestrator-agent` moves games from `dev/` to `prod_games/` with clear deployment notes.
-5. Build the exact folder tree and file list:
+   - plan for future multiplayer games with room/session lifecycle, realtime sync, and ephemeral cleanup.
+5. Plan multiplayer support and backend requirements:
+   - add a multiplayer session architecture that supports room creation, joining, state sync, and session deletion.
+   - use free realtime/back-end providers such as Supabase, Firebase, or serverless functions on Vercel/Netlify.
+   - design sessions to expire automatically once all players leave, with session state stored in a shared realtime store.
+6. Build the exact folder tree and file list:
    - `agents/main-agent/`
      - `skill.md`
      - `README.md`
