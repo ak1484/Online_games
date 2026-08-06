@@ -17,6 +17,9 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Firebase config
+/dev/multiplayer-room/firebase-config.js
+
 # IDE
 .vscode/
 .idea/

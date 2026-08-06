@@ -7,7 +7,10 @@ This project has a static HTML/CSS/JavaScript game in `dev/coin-collector`.
 2. Open `Settings` → `Pages`.
 3. Set the source to `main` branch and choose `/ (root)`.
 4. Save the changes.
-5. Open the live URL: `https://ak1484.github.io/Online_games/dev/coin-collector/index.html`
+5. Open the live site: `https://ak1484.github.io/Online_games/`
+6. Access the current games directly:
+   - `https://ak1484.github.io/Online_games/dev/coin-collector/index.html`
+   - `https://ak1484.github.io/Online_games/dev/multiplayer-room/index.html`
 
 If you prefer a cleaner URL, move or copy `dev/coin-collector` into a `docs/` folder and enable Pages from `main` branch `/docs`.
 

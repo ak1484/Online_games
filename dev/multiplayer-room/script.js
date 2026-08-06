@@ -1,3 +1,8 @@
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { firebaseConfig } from './firebase-config.js';
+
 const createRoomButton = document.getElementById('create-room');
 const joinRoomButton = document.getElementById('join-room');
 const leaveRoomButton = document.getElementById('leave-room');
@@ -8,14 +13,25 @@ const currentRoom = document.getElementById('current-room');
 const playerCount = document.getElementById('player-count');
 const board = document.getElementById('board');
 
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
 let room = null;
 let players = [];
-let localPlayerId = Math.random().toString(36).slice(2, 10);
+let localPlayerId = null;
 let playerIndex = 0;
 let gameState = {
   positions: [],
   turn: 0,
 };
+let roomUnsubscribe = null;
+
+async function init() {
+  const userCredential = await signInAnonymously(auth);
+  localPlayerId = userCredential.user.uid;
+  roomStatus.textContent = 'Connected. Create or join a room.';
+}
 
 function createBoard() {
   board.innerHTML = '';
@@ -31,18 +47,11 @@ function createBoard() {
 function handleCellClick(index) {
   if (!room) return;
   if (players[playerIndex] !== localPlayerId) return;
-
   if (gameState.positions.includes(index)) return;
 
   gameState.positions.push(index);
   gameState.turn = (gameState.turn + 1) % players.length;
-  syncRoomState();
-}
-
-function syncRoomState() {
-  renderBoard();
-  updatePlayerCount();
-  roomStatus.textContent = `Room ${room.roomId} - players: ${players.length}`;
+  saveRoomState();
 }
 
 function renderBoard() {
@@ -56,68 +65,133 @@ function updatePlayerCount() {
   playerCount.textContent = players.length.toString();
 }
 
-function createRoom() {
+function updateRoomStatus(text) {
+  roomStatus.textContent = text;
+}
+
+async function saveRoomState() {
+  if (!room) return;
+  const roomRef = doc(db, 'rooms', room.roomId);
+  await updateDoc(roomRef, {
+    gameState,
+    players,
+    lastActiveAt: serverTimestamp(),
+  });
+}
+
+async function createRoom() {
   const roomId = Math.random().toString(36).slice(2, 8).toUpperCase();
   room = {
     roomId,
     host: localPlayerId,
     players: [localPlayerId],
     gameState,
-    createdAt: Date.now(),
   };
   players = [...room.players];
   playerIndex = 0;
   currentRoom.textContent = roomId;
-  roomStatus.textContent = `Room ${roomId} created. Share this code to invite another player.`;
+  updateRoomStatus(`Room ${roomId} created. Share this code to invite another player.`);
   gamePanel.classList.remove('hidden');
   renderBoard();
   updatePlayerCount();
+
+  const roomRef = doc(db, 'rooms', roomId);
+  await setDoc(roomRef, {
+    roomId,
+    host: localPlayerId,
+    players,
+    gameState,
+    createdAt: serverTimestamp(),
+    lastActiveAt: serverTimestamp(),
+  });
+
+  subscribeRoom(roomId);
 }
 
-function joinRoom() {
+async function joinRoom() {
   const roomId = roomCodeInput.value.trim().toUpperCase();
   if (!roomId) {
-    roomStatus.textContent = 'Enter a valid room code.';
+    updateRoomStatus('Enter a valid room code.');
     return;
   }
-  if (!room || room.roomId !== roomId) {
-    room = {
-      roomId,
-      host: null,
-      players: [localPlayerId],
-      gameState,
-      createdAt: Date.now(),
-    };
+
+  const roomRef = doc(db, 'rooms', roomId);
+  const roomSnapshot = await getDoc(roomRef);
+  if (!roomSnapshot.exists()) {
+    updateRoomStatus(`Room ${roomId} does not exist.`);
+    return;
   }
+
+  room = roomSnapshot.data();
   if (!room.players.includes(localPlayerId)) {
-    room.players.push(localPlayerId);
+    await updateDoc(roomRef, {
+      players: arrayUnion(localPlayerId),
+      lastActiveAt: serverTimestamp(),
+    });
   }
-  players = [...room.players];
+
+  players = room.players.includes(localPlayerId) ? [...room.players] : [...room.players, localPlayerId];
   playerIndex = players.indexOf(localPlayerId);
   currentRoom.textContent = roomId;
-  roomStatus.textContent = `Joined room ${roomId}. Waiting for other player.`;
+  updateRoomStatus(`Joined room ${roomId}. Waiting for other player.`);
   gamePanel.classList.remove('hidden');
   renderBoard();
   updatePlayerCount();
+
+  subscribeRoom(roomId);
 }
 
-function leaveRoom() {
-  if (!room) return;
-  room.players = room.players.filter((id) => id !== localPlayerId);
-  players = [...room.players];
-  if (players.length === 0) {
-    room = null;
-    roomStatus.textContent = 'Room closed. Create a new room to start again.';
-    currentRoom.textContent = '—';
-    gamePanel.classList.add('hidden');
-    board.innerHTML = '';
-    createBoard();
-    return;
+function subscribeRoom(roomId) {
+  if (roomUnsubscribe) {
+    roomUnsubscribe();
   }
+
+  const roomRef = doc(db, 'rooms', roomId);
+  roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
+    const data = snapshot.data();
+    if (!data) {
+      updateRoomStatus('Room closed or removed.');
+      return;
+    }
+
+    room = data;
+    players = room.players || [];
+    gameState = room.gameState || { positions: [], turn: 0 };
+    playerIndex = players.indexOf(localPlayerId);
+    currentRoom.textContent = room.roomId;
+    renderBoard();
+    updatePlayerCount();
+
+    if (players.length === 1) {
+      updateRoomStatus(`Room ${room.roomId} waiting for another player.`);
+    } else {
+      updateRoomStatus(`Room ${room.roomId} synced. Your turn: ${players[playerIndex] === localPlayerId}`);
+    }
+  });
+}
+
+async function leaveRoom() {
+  if (!room) return;
+  const roomRef = doc(db, 'rooms', room.roomId);
+  await updateDoc(roomRef, {
+    players: arrayRemove(localPlayerId),
+    lastActiveAt: serverTimestamp(),
+  });
+
+  if (roomUnsubscribe) {
+    roomUnsubscribe();
+    roomUnsubscribe = null;
+  }
+
+  room = null;
+  players = [];
   playerIndex = 0;
-  currentRoom.textContent = room.roomId;
-  roomStatus.textContent = `Left room. Remaining players: ${players.length}.`;
-  updatePlayerCount();
+  gameState = { positions: [], turn: 0 };
+  currentRoom.textContent = '—';
+  updateRoomStatus('Room closed. Create a new room to start again.');
+  gamePanel.classList.add('hidden');
+  board.innerHTML = '';
+  createBoard();
 }
 
 createRoomButton.addEventListener('click', createRoom);
@@ -125,3 +199,4 @@ joinRoomButton.addEventListener('click', joinRoom);
 leaveRoomButton.addEventListener('click', leaveRoom);
 
 createBoard();
+init();

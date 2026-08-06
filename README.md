@@ -23,12 +23,26 @@ It includes agent-based planning, development workflows, and a clean structure f
 This project has a static game prototype in `dev/coin-collector`.
 You can deploy it for free using GitHub Pages, Vercel, or Netlify.
 
-- GitHub Pages: `main` branch root deployment and access the game at `https://ak1484.github.io/Online_games/dev/coin-collector/index.html`
+- GitHub Pages: site is available at `https://ak1484.github.io/Online_games/`
+- Single-player game: `https://ak1484.github.io/Online_games/dev/coin-collector/index.html`
+- Multiplayer prototype: `https://ak1484.github.io/Online_games/dev/multiplayer-room/index.html`
 - Vercel: import the repo and set the root directory to `dev/coin-collector`
 - Netlify: import the repo and publish from `dev/coin-collector`
 
 Future multiplayer versions will require a simple backend or realtime service.
 Recommended free services include Supabase or Firebase for realtime sync, auth, and session state, with Vercel/Netlify hosting serverless match/room APIs.
+
+### Deploying the multiplayer room with Firebase Hosting
+1. Install Node.js and Firebase CLI: `npm install -g firebase-tools`
+2. Log in: `firebase login`
+3. Initialize hosting in the repo: `firebase init hosting`
+   - Choose the existing Firebase project `multiplayerroomtest`
+   - Set `dev/multiplayer-room` as the public directory
+   - Configure as a single-page app if needed
+4. Deploy: `firebase deploy`
+5. Visit the Firebase Hosting URL from the Firebase console.
+
+> Keep `dev/multiplayer-room/firebase-config.js` out of source control. It is already ignored by `.gitignore`.
 
 See `docs/deployment-guide.md` and `docs/multiplayer-design.md` for full steps.
 
