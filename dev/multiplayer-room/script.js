@@ -33,6 +33,20 @@ async function init() {
   roomStatus.textContent = 'Connected. Create or join a room.';
 }
 
+async function debugLogRoom() {
+  if (!room) {
+    console.log('No active room to debug');
+    return;
+  }
+  try {
+    const roomRef = doc(db, 'rooms', room.roomId);
+    const snap = await getDoc(roomRef);
+    console.log('Debug room snapshot:', snap.exists() ? snap.data() : null);
+  } catch (e) {
+    console.error('Error fetching room doc for debug:', e);
+  }
+}
+
 function createBoard() {
   board.innerHTML = '';
   for (let i = 0; i < 64; i += 1) {
@@ -210,6 +224,10 @@ async function main() {
   leaveRoomButton.addEventListener('click', leaveRoom);
 
   await init();
+  console.log('Firebase initialized', auth.currentUser ? auth.currentUser.uid : '(no user)');
+
+  const debugButton = document.getElementById('debug-log-room');
+  if (debugButton) debugButton.addEventListener('click', debugLogRoom);
 }
 
 main();
