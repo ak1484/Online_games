@@ -11,7 +11,13 @@ const roomStatus = document.getElementById('room-status');
 const gamePanel = document.getElementById('game-panel');
 const currentRoom = document.getElementById('current-room');
 const playerCount = document.getElementById('player-count');
+const turnStatus = document.getElementById('turn-status');
+const playerLegend = document.getElementById('player-legend');
 const board = document.getElementById('board');
+const showInstructionsButton = document.getElementById('show-instructions');
+const instructionsModal = document.getElementById('instructions-modal');
+const closeInstructionsButton = document.getElementById('close-instructions');
+const closeInstructionsBottom = document.getElementById('close-instructions-bottom');
 
 let app = null;
 let db = null;
@@ -22,10 +28,11 @@ let players = [];
 let localPlayerId = null;
 let playerIndex = 0;
 let gameState = {
-  positions: [],
+  markers: {},
   turn: 0,
 };
 let roomUnsubscribe = null;
+const playerColors = ['#2563eb', '#14b8a6', '#f59e0b', '#ef4444'];
 
 async function init() {
   try {
@@ -38,6 +45,82 @@ async function init() {
     roomStatus.textContent = `Auth failed: ${err.message || err}`;
     throw err;
   }
+}
+
+function normalizeArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === 'object') return Object.values(value).filter((item) => item !== null && item !== undefined);
+  return [];
+}
+
+function normalizeMarkers(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value;
+  return {};
+}
+
+function getPlayerColor(playerId) {
+  const index = players.indexOf(playerId);
+  return playerColors[index >= 0 ? index % playerColors.length : 0];
+}
+
+function getPlayerLabel(playerId) {
+  const index = players.indexOf(playerId);
+  if (playerId === localPlayerId) {
+    return `You (${index + 1})`;
+  }
+  return index >= 0 ? `Player ${index + 1}` : 'Guest';
+}
+
+function updatePlayerLegend() {
+  if (!playerLegend) return;
+  playerLegend.innerHTML = players.map((playerId, index) => {
+    const isLocal = playerId === localPlayerId;
+    const label = isLocal ? `You (${index + 1})` : `Player ${index + 1}`;
+    return `<span class="player-chip" style="color:${getPlayerColor(playerId)}">${label}</span>`;
+  }).join('');
+}
+
+function updateTurnStatus() {
+  if (!turnStatus) return;
+  if (!room || players.length === 0) {
+    turnStatus.textContent = 'Waiting for a room.';
+    return;
+  }
+  if (players.length === 1) {
+    turnStatus.textContent = 'Waiting for another player to join...';
+    return;
+  }
+
+  const markers = normalizeMarkers(gameState.markers);
+  const claimedCells = Object.keys(markers).length;
+  if (claimedCells >= 64) {
+    const scores = players.reduce((acc, playerId) => {
+      acc[playerId] = Object.values(markers).filter((owner) => owner === playerId).length;
+      return acc;
+    }, {});
+    const winner = players.reduce((best, playerId) => {
+      if (!best || scores[playerId] > scores[best]) return playerId;
+      return best;
+    }, null);
+    const sorted = [...players].sort((a, b) => scores[b] - scores[a]);
+    const topScore = scores[sorted[0]];
+    const isTie = sorted.length > 1 && scores[sorted[0]] === scores[sorted[1]];
+    if (isTie) {
+      turnStatus.textContent = `Game over: tie with ${topScore} cells each.`;
+    } else {
+      turnStatus.textContent = `Game over: ${getPlayerLabel(winner)} wins with ${topScore} cells.`;
+    }
+    return;
+  }
+
+  const currentPlayer = players[gameState.turn] || null;
+  if (!currentPlayer) {
+    turnStatus.textContent = 'Waiting for player order...';
+    return;
+  }
+  turnStatus.textContent = currentPlayer === localPlayerId
+    ? `Your turn (${getPlayerLabel(currentPlayer)})`
+    : `Waiting for ${getPlayerLabel(currentPlayer)}`;
 }
 
 async function debugLogRoom() {
@@ -68,17 +151,30 @@ function createBoard() {
 function handleCellClick(index) {
   if (!room) return;
   if (players[playerIndex] !== localPlayerId) return;
-  if (gameState.positions.includes(index)) return;
+  gameState.markers = normalizeMarkers(gameState.markers);
+  if (gameState.markers[index]) return;
 
-  gameState.positions.push(index);
-  gameState.turn = (gameState.turn + 1) % players.length;
+  gameState.markers[index] = localPlayerId;
+  gameState.turn = players.length > 0 ? (gameState.turn + 1) % players.length : 0;
   saveRoomState();
 }
 
 function renderBoard() {
+  const markers = normalizeMarkers(gameState.markers);
   document.querySelectorAll('.cell').forEach((cell) => {
     const index = Number(cell.dataset.index);
-    cell.classList.toggle('active', gameState.positions.includes(index));
+    const ownerId = markers[index] || null;
+    const occupied = ownerId !== null;
+
+    cell.classList.toggle('active', occupied);
+    cell.textContent = ownerId ? `${players.indexOf(ownerId) + 1}` : '';
+    if (ownerId) {
+      cell.style.background = getPlayerColor(ownerId);
+      cell.style.color = '#ffffff';
+    } else {
+      cell.style.background = '#1f2937';
+      cell.style.color = '#f8fafc';
+    }
   });
 }
 
@@ -93,10 +189,15 @@ function updateRoomStatus(text) {
 async function saveRoomState() {
   if (!room) return;
   const roomRef = ref(db, `rooms/${room.roomId}`);
+  const normalizedPlayers = normalizeArray(players);
+  const normalizedGameState = {
+    markers: normalizeMarkers(gameState.markers),
+    turn: typeof gameState.turn === 'number' ? gameState.turn : 0,
+  };
   try {
     await update(roomRef, {
-      gameState,
-      players,
+      gameState: normalizedGameState,
+      players: normalizedPlayers,
       lastActiveAt: Date.now(),
     });
   } catch (err) {
@@ -107,6 +208,10 @@ async function saveRoomState() {
 
 async function createRoom() {
   const roomId = Math.random().toString(36).slice(2, 8).toUpperCase();
+  gameState = {
+    markers: {},
+    turn: 0,
+  };
   room = {
     roomId,
     host: localPlayerId,
@@ -119,7 +224,9 @@ async function createRoom() {
   updateRoomStatus(`Room ${roomId} created. Share this code to invite another player.`);
   gamePanel.classList.remove('hidden');
   renderBoard();
+  updatePlayerLegend();
   updatePlayerCount();
+  updateTurnStatus();
 
   const roomRef = ref(db, `rooms/${roomId}`);
   try {
@@ -154,14 +261,15 @@ async function joinRoom() {
     }
 
     room = roomSnapshot.val();
-    if (!room.players.includes(localPlayerId)) {
-      players = [...room.players, localPlayerId];
+    const roomPlayers = normalizeArray(room.players);
+    if (!roomPlayers.includes(localPlayerId)) {
+      players = [...roomPlayers, localPlayerId];
       await update(roomRef, {
         players,
         lastActiveAt: Date.now(),
       });
     } else {
-      players = [...room.players];
+      players = [...roomPlayers];
     }
   } catch (err) {
     console.error('Failed to join room:', err);
@@ -174,7 +282,9 @@ async function joinRoom() {
   updateRoomStatus(`Joined room ${roomId}. Waiting for other player.`);
   gamePanel.classList.remove('hidden');
   renderBoard();
+  updatePlayerLegend();
   updatePlayerCount();
+  updateTurnStatus();
 
   subscribeRoom(roomId);
 }
@@ -193,12 +303,18 @@ function subscribeRoom(roomId) {
     }
 
     room = data;
-    players = room.players || [];
-    gameState = room.gameState || { positions: [], turn: 0 };
+    players = normalizeArray(room.players);
+    gameState = room.gameState || { markers: {}, turn: 0 };
+    gameState.markers = normalizeMarkers(gameState.markers);
+    if (typeof gameState.turn !== 'number') {
+      gameState.turn = 0;
+    }
     playerIndex = players.indexOf(localPlayerId);
     currentRoom.textContent = room.roomId;
     renderBoard();
+    updatePlayerLegend();
     updatePlayerCount();
+    updateTurnStatus();
 
     if (players.length === 1) {
       updateRoomStatus(`Room ${room.roomId} waiting for another player.`);
@@ -234,9 +350,11 @@ async function leaveRoom() {
   room = null;
   players = [];
   playerIndex = 0;
-  gameState = { positions: [], turn: 0 };
+  gameState = { markers: {}, turn: 0 };
   currentRoom.textContent = '—';
   updateRoomStatus('Room closed. Create a new room to start again.');
+  if (playerLegend) playerLegend.innerHTML = '';
+  if (turnStatus) turnStatus.textContent = 'Waiting for a room.';
   gamePanel.classList.add('hidden');
   board.innerHTML = '';
   createBoard();
@@ -259,6 +377,14 @@ async function main() {
   createRoomButton.addEventListener('click', createRoom);
   joinRoomButton.addEventListener('click', joinRoom);
   leaveRoomButton.addEventListener('click', leaveRoom);
+  if (showInstructionsButton) showInstructionsButton.addEventListener('click', openInstructions);
+  if (closeInstructionsButton) closeInstructionsButton.addEventListener('click', closeInstructions);
+  if (closeInstructionsBottom) closeInstructionsBottom.addEventListener('click', closeInstructions);
+  if (instructionsModal) instructionsModal.addEventListener('click', (event) => {
+    if (event.target === instructionsModal || event.target.id === 'instructions-backdrop') {
+      closeInstructions();
+    }
+  });
 
   try {
     await init();
@@ -269,6 +395,16 @@ async function main() {
 
   const debugButton = document.getElementById('debug-log-room');
   if (debugButton) debugButton.addEventListener('click', debugLogRoom);
+}
+
+function openInstructions() {
+  if (!instructionsModal) return;
+  instructionsModal.classList.remove('hidden');
+}
+
+function closeInstructions() {
+  if (!instructionsModal) return;
+  instructionsModal.classList.add('hidden');
 }
 
 main();

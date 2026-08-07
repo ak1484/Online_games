@@ -9,7 +9,24 @@ Use Firebase for free backend services, including realtime database, Firestore, 
 3. Add a Web app to the project.
 4. Copy the Firebase config and place it in `dev/multiplayer-room/firebase-config.js`.
 5. Enable Authentication if you want player login using Email, Google, or anonymous sign-in.
-6. Enable Firestore or Realtime Database for session state storage.
+7. Enable Realtime Database for the current multiplayer prototype.
+
+## Realtime Database rules example
+
+Use this rule file for development if you want anonymous users to read/write rooms:
+
+```json
+{
+  "rules": {
+    "rooms": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
+```
+
+Save it as `infra/firebase-rtdb-rules.json` and apply it in the Firebase Console.
 
 ## Suggested services
 
