@@ -1,5 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+import { getDatabase, ref, set, get, update, onValue, remove } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js';
 import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { loadFirebaseConfig } from './firebase-loader.js';
 
@@ -46,9 +46,9 @@ async function debugLogRoom() {
     return;
   }
   try {
-    const roomRef = doc(db, 'rooms', room.roomId);
-    const snap = await getDoc(roomRef);
-    console.log('Debug room snapshot:', snap.exists() ? snap.data() : null);
+    const roomRef = ref(db, `rooms/${room.roomId}`);
+    const snap = await get(roomRef);
+    console.log('Debug room snapshot:', snap.exists() ? snap.val() : null);
   } catch (e) {
     console.error('Error fetching room doc for debug:', e);
   }
@@ -92,12 +92,12 @@ function updateRoomStatus(text) {
 
 async function saveRoomState() {
   if (!room) return;
-  const roomRef = doc(db, 'rooms', room.roomId);
+  const roomRef = ref(db, `rooms/${room.roomId}`);
   try {
-    await updateDoc(roomRef, {
+    await update(roomRef, {
       gameState,
       players,
-      lastActiveAt: serverTimestamp(),
+      lastActiveAt: Date.now(),
     });
   } catch (err) {
     console.error('Failed to save room state:', err);
@@ -121,15 +121,15 @@ async function createRoom() {
   renderBoard();
   updatePlayerCount();
 
-  const roomRef = doc(db, 'rooms', roomId);
+  const roomRef = ref(db, `rooms/${roomId}`);
   try {
-    await setDoc(roomRef, {
+    await set(roomRef, {
       roomId,
       host: localPlayerId,
       players,
       gameState,
-      createdAt: serverTimestamp(),
-      lastActiveAt: serverTimestamp(),
+      createdAt: Date.now(),
+      lastActiveAt: Date.now(),
     });
     subscribeRoom(roomId);
   } catch (err) {
@@ -145,20 +145,23 @@ async function joinRoom() {
     return;
   }
 
-  const roomRef = doc(db, 'rooms', roomId);
+  const roomRef = ref(db, `rooms/${roomId}`);
   try {
-    const roomSnapshot = await getDoc(roomRef);
+    const roomSnapshot = await get(roomRef);
     if (!roomSnapshot.exists()) {
       updateRoomStatus(`Room ${roomId} does not exist.`);
       return;
     }
 
-    room = roomSnapshot.data();
+    room = roomSnapshot.val();
     if (!room.players.includes(localPlayerId)) {
-      await updateDoc(roomRef, {
-        players: arrayUnion(localPlayerId),
-        lastActiveAt: serverTimestamp(),
+      players = [...room.players, localPlayerId];
+      await update(roomRef, {
+        players,
+        lastActiveAt: Date.now(),
       });
+    } else {
+      players = [...room.players];
     }
   } catch (err) {
     console.error('Failed to join room:', err);
@@ -166,7 +169,6 @@ async function joinRoom() {
     return;
   }
 
-  players = room.players.includes(localPlayerId) ? [...room.players] : [...room.players, localPlayerId];
   playerIndex = players.indexOf(localPlayerId);
   currentRoom.textContent = roomId;
   updateRoomStatus(`Joined room ${roomId}. Waiting for other player.`);
@@ -182,9 +184,9 @@ function subscribeRoom(roomId) {
     roomUnsubscribe();
   }
 
-  const roomRef = doc(db, 'rooms', roomId);
-  roomUnsubscribe = onSnapshot(roomRef, (snapshot) => {
-    const data = snapshot.data();
+  const roomRef = ref(db, `rooms/${roomId}`);
+  roomUnsubscribe = onValue(roomRef, (snapshot) => {
+    const data = snapshot.val();
     if (!data) {
       updateRoomStatus('Room closed or removed.');
       return;
@@ -208,11 +210,21 @@ function subscribeRoom(roomId) {
 
 async function leaveRoom() {
   if (!room) return;
-  const roomRef = doc(db, 'rooms', room.roomId);
-  await updateDoc(roomRef, {
-    players: arrayRemove(localPlayerId),
-    lastActiveAt: serverTimestamp(),
-  });
+  const roomRef = ref(db, `rooms/${room.roomId}`);
+  try {
+    const nextPlayers = players.filter((id) => id !== localPlayerId);
+    if (nextPlayers.length === 0) {
+      await remove(roomRef);
+    } else {
+      await update(roomRef, {
+        players: nextPlayers,
+        lastActiveAt: Date.now(),
+      });
+    }
+  } catch (err) {
+    console.error('Failed to leave room:', err);
+    roomStatus.textContent = `Leave failed: ${err.message || err}`;
+  }
 
   if (roomUnsubscribe) {
     roomUnsubscribe();
@@ -230,16 +242,12 @@ async function leaveRoom() {
   createBoard();
 }
 
-createRoomButton.addEventListener('click', createRoom);
-joinRoomButton.addEventListener('click', joinRoom);
-leaveRoomButton.addEventListener('click', leaveRoom);
-
 async function main() {
   try {
     const cfg = await loadFirebaseConfig();
     console.log('Loaded Firebase config projectId:', cfg.projectId);
     app = initializeApp(cfg);
-    db = getFirestore(app);
+    db = getDatabase(app);
     auth = getAuth(app);
   } catch (err) {
     console.error('Failed to initialize Firebase:', err);
@@ -256,7 +264,7 @@ async function main() {
     await init();
     console.log('Firebase initialized', auth.currentUser ? auth.currentUser.uid : '(no user)');
   } catch (err) {
-    // already handled in init
+    // init logs errors already
   }
 
   const debugButton = document.getElementById('debug-log-room');
