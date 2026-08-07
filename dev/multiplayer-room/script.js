@@ -28,9 +28,16 @@ let gameState = {
 let roomUnsubscribe = null;
 
 async function init() {
-  const userCredential = await signInAnonymously(auth);
-  localPlayerId = userCredential.user.uid;
-  roomStatus.textContent = 'Connected. Create or join a room.';
+  try {
+    const userCredential = await signInAnonymously(auth);
+    localPlayerId = userCredential.user.uid;
+    roomStatus.textContent = `Connected as ${localPlayerId}. Create or join a room.`;
+    console.log('Auth successful, uid:', localPlayerId);
+  } catch (err) {
+    console.error('Anonymous sign-in failed:', err);
+    roomStatus.textContent = `Auth failed: ${err.message || err}`;
+    throw err;
+  }
 }
 
 async function debugLogRoom() {
@@ -86,11 +93,16 @@ function updateRoomStatus(text) {
 async function saveRoomState() {
   if (!room) return;
   const roomRef = doc(db, 'rooms', room.roomId);
-  await updateDoc(roomRef, {
-    gameState,
-    players,
-    lastActiveAt: serverTimestamp(),
-  });
+  try {
+    await updateDoc(roomRef, {
+      gameState,
+      players,
+      lastActiveAt: serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('Failed to save room state:', err);
+    roomStatus.textContent = `Save failed: ${err.message || err}`;
+  }
 }
 
 async function createRoom() {
@@ -110,16 +122,20 @@ async function createRoom() {
   updatePlayerCount();
 
   const roomRef = doc(db, 'rooms', roomId);
-  await setDoc(roomRef, {
-    roomId,
-    host: localPlayerId,
-    players,
-    gameState,
-    createdAt: serverTimestamp(),
-    lastActiveAt: serverTimestamp(),
-  });
-
-  subscribeRoom(roomId);
+  try {
+    await setDoc(roomRef, {
+      roomId,
+      host: localPlayerId,
+      players,
+      gameState,
+      createdAt: serverTimestamp(),
+      lastActiveAt: serverTimestamp(),
+    });
+    subscribeRoom(roomId);
+  } catch (err) {
+    console.error('Failed to create room:', err);
+    roomStatus.textContent = `Room create failed: ${err.message || err}`;
+  }
 }
 
 async function joinRoom() {
@@ -130,18 +146,24 @@ async function joinRoom() {
   }
 
   const roomRef = doc(db, 'rooms', roomId);
-  const roomSnapshot = await getDoc(roomRef);
-  if (!roomSnapshot.exists()) {
-    updateRoomStatus(`Room ${roomId} does not exist.`);
-    return;
-  }
+  try {
+    const roomSnapshot = await getDoc(roomRef);
+    if (!roomSnapshot.exists()) {
+      updateRoomStatus(`Room ${roomId} does not exist.`);
+      return;
+    }
 
-  room = roomSnapshot.data();
-  if (!room.players.includes(localPlayerId)) {
-    await updateDoc(roomRef, {
-      players: arrayUnion(localPlayerId),
-      lastActiveAt: serverTimestamp(),
-    });
+    room = roomSnapshot.data();
+    if (!room.players.includes(localPlayerId)) {
+      await updateDoc(roomRef, {
+        players: arrayUnion(localPlayerId),
+        lastActiveAt: serverTimestamp(),
+      });
+    }
+  } catch (err) {
+    console.error('Failed to join room:', err);
+    updateRoomStatus(`Join failed: ${err.message || err}`);
+    return;
   }
 
   players = room.players.includes(localPlayerId) ? [...room.players] : [...room.players, localPlayerId];
@@ -213,18 +235,29 @@ joinRoomButton.addEventListener('click', joinRoom);
 leaveRoomButton.addEventListener('click', leaveRoom);
 
 async function main() {
-  const cfg = await loadFirebaseConfig();
-  app = initializeApp(cfg);
-  db = getFirestore(app);
-  auth = getAuth(app);
+  try {
+    const cfg = await loadFirebaseConfig();
+    console.log('Loaded Firebase config projectId:', cfg.projectId);
+    app = initializeApp(cfg);
+    db = getFirestore(app);
+    auth = getAuth(app);
+  } catch (err) {
+    console.error('Failed to initialize Firebase:', err);
+    roomStatus.textContent = `Firebase init failed: ${err.message || err}`;
+    return;
+  }
 
   createBoard();
   createRoomButton.addEventListener('click', createRoom);
   joinRoomButton.addEventListener('click', joinRoom);
   leaveRoomButton.addEventListener('click', leaveRoom);
 
-  await init();
-  console.log('Firebase initialized', auth.currentUser ? auth.currentUser.uid : '(no user)');
+  try {
+    await init();
+    console.log('Firebase initialized', auth.currentUser ? auth.currentUser.uid : '(no user)');
+  } catch (err) {
+    // already handled in init
+  }
 
   const debugButton = document.getElementById('debug-log-room');
   if (debugButton) debugButton.addEventListener('click', debugLogRoom);
