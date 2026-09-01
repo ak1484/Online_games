@@ -64,36 +64,41 @@ const setupJoinBtn = document.getElementById('setup-join-btn');
 const setupError = document.getElementById('setup-error');
 
 function showSetupModal() {
-  setupModal.classList.remove('hidden');
+  if (setupModal) setupModal.classList.remove('hidden');
 }
 
 function hideSetupModal() {
-  setupModal.classList.add('hidden');
+  if (setupModal) setupModal.classList.add('hidden');
 }
 
 function showSetupError(message) {
+  if (!setupError) return;
   setupError.textContent = message;
   setupError.classList.remove('hidden');
   setTimeout(() => setupError.classList.add('hidden'), 5000);
 }
 
-// Tab switching
-tabBtns.forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    tabBtns.forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+// Tab switching - only if elements exist (on login page)
+if (tabBtns.length > 0) {
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
 
-    e.target.classList.add('active');
-    const tabName = e.target.dataset.tab;
-    document.getElementById(`${tabName}-tab`).classList.add('active');
+      e.target.classList.add('active');
+      const tabName = e.target.dataset.tab;
+      const targetTab = document.getElementById(`${tabName}-tab`);
+      if (targetTab) targetTab.classList.add('active');
+    });
   });
-});
+}
 
-// Create new space
-setupCreateBtn.addEventListener('click', async () => {
-  const name = document.getElementById('setup-name').value.trim();
-  const spaceName = document.getElementById('setup-space-name').value.trim();
-  const passcode = document.getElementById('setup-passcode').value;
+// Create new space - only if button exists (on login page)
+if (setupCreateBtn) {
+  setupCreateBtn.addEventListener('click', async () => {
+    const name = document.getElementById('setup-name').value.trim();
+    const spaceName = document.getElementById('setup-space-name').value.trim();
+    const passcode = document.getElementById('setup-passcode').value;
 
   if (!name || !spaceName || passcode.length < 6) {
     showSetupError('Please fill all fields. Passcode must be at least 6 characters.');
@@ -130,7 +135,7 @@ setupCreateBtn.addEventListener('click', async () => {
     });
 
     hideSetupModal();
-    initializeApp();
+    setupCoupleSpace();
   } catch (err) {
     console.error('Create space error:', err);
     showSetupError('Failed to create space. Please try again.');
@@ -138,9 +143,11 @@ setupCreateBtn.addEventListener('click', async () => {
     setupCreateBtn.textContent = 'Create My Space';
   }
 });
+}
 
-// Join existing space
-setupJoinBtn.addEventListener('click', async () => {
+// Join existing space - only if button exists (on login page)
+if (setupJoinBtn) {
+  setupJoinBtn.addEventListener('click', async () => {
   const name = document.getElementById('join-name').value.trim();
   const passcode = document.getElementById('join-passcode').value;
 
@@ -187,7 +194,7 @@ setupJoinBtn.addEventListener('click', async () => {
     });
 
     hideSetupModal();
-    initializeApp();
+    setupCoupleSpace();
   } catch (err) {
     console.error('Join space error:', err);
     showSetupError('Failed to join space. Please check your passcode.');
@@ -195,6 +202,7 @@ setupJoinBtn.addEventListener('click', async () => {
     setupJoinBtn.textContent = 'Join Space';
   }
 });
+}
 
 // ============ PROFILE & MANAGEMENT MODAL ============
 
@@ -203,24 +211,39 @@ const openProfileBtn = document.getElementById('open-profile-btn');
 const closeProfileBtn = document.getElementById('close-profile-modal');
 const logoutBtn = document.getElementById('logout-btn');
 
-openProfileBtn.addEventListener('click', () => {
-  document.getElementById('profile-name').value = userName;
-  document.getElementById('profile-space-name').textContent = coupleSpaceName;
-  document.getElementById('profile-space-id').textContent = coupleId;
-  document.getElementById('profile-invite-link').value = generateInviteLink(coupleId);
+if (openProfileBtn) {
+  openProfileBtn.addEventListener('click', () => {
+    document.getElementById('profile-name').value = userName;
+    document.getElementById('profile-space-name').textContent = coupleSpaceName;
+    const spaceIdElem = document.getElementById('profile-space-id');
+    if (spaceIdElem) spaceIdElem.textContent = coupleId;
+    document.getElementById('profile-invite-link').value = generateInviteLink(coupleId);
 
-  profileModal.classList.remove('hidden');
-});
+    if (profileModal) profileModal.classList.remove('hidden');
+  });
+}
 
-closeProfileBtn.addEventListener('click', () => {
-  profileModal.classList.add('hidden');
-});
+if (closeProfileBtn) {
+  closeProfileBtn.addEventListener('click', () => {
+    if (profileModal) profileModal.classList.add('hidden');
+  });
+}
 
-logoutBtn.addEventListener('click', () => {
-  localStorage.clear();
-  coupleId = null;
-  location.reload();
-});
+// Close button at bottom of modal
+const closeProfileBtnBottom = document.getElementById('close-profile-btn');
+if (closeProfileBtnBottom) {
+  closeProfileBtnBottom.addEventListener('click', () => {
+    if (profileModal) profileModal.classList.add('hidden');
+  });
+}
+
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    localStorage.clear();
+    coupleId = null;
+    location.reload();
+  });
+}
 
 document.getElementById('profile-copy-btn').addEventListener('click', () => {
   const link = document.getElementById('profile-invite-link');
@@ -253,7 +276,7 @@ if (copyInviteBtn) {
 document.getElementById('profile-name').addEventListener('change', async (e) => {
   userName = e.target.value.trim() || userName;
   localStorage.setItem('couple_user_name', userName);
-  const memberRef = ref(db, `couples/${coupleId}/members/${currentUser.uid}/name`);
+  const memberRef = ref(db, `couples/${coupleId}/members/${currentUser.uid}`);
   await update(memberRef, { name: userName });
   updateUIUserInfo();
 });
@@ -263,9 +286,11 @@ document.querySelectorAll('.emoji-select').forEach(btn => {
     e.preventDefault();
     userAvatar = btn.dataset.emoji;
     localStorage.setItem('couple_user_avatar', userAvatar);
-    const memberRef = ref(db, `couples/${coupleId}/members/${currentUser.uid}/avatar`);
-    await update(memberRef, { avatar: userAvatar });
-    updateUIUserInfo();
+    if (db && coupleId && currentUser) {
+      const memberRef = ref(db, `couples/${coupleId}/members/${currentUser.uid}`);
+      await update(memberRef, { avatar: userAvatar });
+      updateUIUserInfo();
+    }
 
     document.querySelectorAll('.emoji-select').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
@@ -275,26 +300,39 @@ document.querySelectorAll('.emoji-select').forEach(btn => {
 // ============ DISPLAY UPDATES ============
 
 function updateUIUserInfo() {
-  document.getElementById('user-avatar-display').textContent = userAvatar;
-  document.getElementById('user-name-display').textContent = userName;
-  document.getElementById('my-bar-avatar').textContent = userAvatar;
-  document.getElementById('my-bar-name').textContent = userName;
-  document.getElementById('space-name-display').textContent = coupleSpaceName || 'My Space';
+  const userAvatarDisplay = document.getElementById('user-avatar-display');
+  const userNameDisplay = document.getElementById('user-name-display');
+  const myBarAvatar = document.getElementById('my-bar-avatar');
+  const myBarName = document.getElementById('my-bar-name');
+  const spaceNameDisplay = document.getElementById('space-name-display');
+
+  if (userAvatarDisplay) userAvatarDisplay.textContent = userAvatar;
+  if (userNameDisplay) userNameDisplay.textContent = userName;
+  if (myBarAvatar) myBarAvatar.textContent = userAvatar;
+  if (myBarName) myBarName.textContent = userName;
+  if (spaceNameDisplay) spaceNameDisplay.textContent = coupleSpaceName || 'My Space';
 }
 
 function updatePartnerStatus() {
   if (partnerName) {
-    document.getElementById('partner-status-tag').classList.add('partner-online-tag');
-    document.getElementById('partner-bar-avatar').textContent = partnerAvatar || '🤍';
-    document.getElementById('partner-bar-name').textContent = partnerName;
-    document.getElementById('partner-status-dot').classList.toggle('online', partnerOnline);
-    document.getElementById('partner-status-dot').classList.toggle('offline', !partnerOnline);
+    const partnerStatusTag = document.getElementById('partner-status-tag');
+    const partnerBarAvatar = document.getElementById('partner-bar-avatar');
+    const partnerBarName = document.getElementById('partner-bar-name');
+    const partnerStatusDot = document.getElementById('partner-status-dot');
+
+    if (partnerStatusTag) partnerStatusTag.classList.add('partner-online-tag');
+    if (partnerBarAvatar) partnerBarAvatar.textContent = partnerAvatar || '🤍';
+    if (partnerBarName) partnerBarName.textContent = partnerName;
+    if (partnerStatusDot) {
+      partnerStatusDot.classList.toggle('online', partnerOnline);
+      partnerStatusDot.classList.toggle('offline', !partnerOnline);
+    }
   }
 }
 
 // ============ FIREBASE INITIALIZATION ============
 
-async function initializeApp() {
+async function setupCoupleSpace() {
   if (!coupleId) {
     showSetupModal();
     return;
@@ -777,7 +815,7 @@ async function init() {
     }
 
     // Now initialize the app with the couple space
-    await initializeApp();
+    setupCoupleSpace();
   } catch (err) {
     console.error('Initialization error:', err);
     updateStatus(`Connection failed: ${err.message}`, 'error');

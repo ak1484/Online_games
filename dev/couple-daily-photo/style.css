@@ -1,3 +1,24 @@
+/* CSS Variables */
+:root {
+  --primary: #be123c;
+  --primary-hover: #9f1239;
+  --primary-light: #fff1f2;
+  --primary-glow: rgba(190, 18, 60, 0.25);
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+  --border: #fecdd3;
+  --card-bg-translucent: rgba(255, 255, 255, 0.85);
+  --bg-gradient: radial-gradient(circle at top, #fff1f2 0%, #fdf2f8 50%, #f5f3ff 100%);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+  --shadow-sm: 0 2px 8px rgba(190, 18, 60, 0.08);
+  --shadow-md: 0 4px 16px rgba(190, 18, 60, 0.12);
+  --shadow-lg: 0 8px 32px rgba(190, 18, 60, 0.16);
+}
+
 /* LOGIN PAGE STYLES */
 .login-page {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

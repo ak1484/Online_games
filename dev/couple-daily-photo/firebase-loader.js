@@ -1,19 +1,28 @@
 export async function loadFirebaseConfig() {
-  // Dynamically resolve relative to this module's URL to work on any host/path
-  const resolvedPath = new URL('../../infra/demo_database_config.json', import.meta.url).href;
+  // For local development, use absolute paths from current host
+  const baseUrl = window.location.origin + window.location.pathname.replace(/[^/]+$/, '');
 
   const candidates = [
-    resolvedPath,
-    '../../infra/demo_database_config.json',
+    baseUrl + '../../infra/demo_database_config.json',
+    baseUrl + 'infra/demo_database_config.json',
+    baseUrl + '../infra/demo_database_config.json',
     '/Online_games/infra/demo_database_config.json',
-    '/infra/demo_database_config.json'
+    '/infra/demo_database_config.json',
+    baseUrl + 'demo_database_config.json'
   ];
+
+  console.log('Trying to load Firebase config from:', candidates);
 
   for (const path of candidates) {
     try {
+      console.log('Fetching:', path);
       const resp = await fetch(path, { cache: 'no-store' });
-      if (!resp.ok) continue;
+      if (!resp.ok) {
+        console.log('Not OK:', resp.status, path);
+        continue;
+      }
       const json = await resp.json();
+      console.log('Got config:', json);
       if (json && json.firebase) return json.firebase;
     } catch (e) {
       console.warn(`Failed to fetch config from ${path}:`, e);
