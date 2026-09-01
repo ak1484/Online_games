@@ -17,6 +17,10 @@ export async function loadFirebaseConfig() {
   }
 
   // Fallback to local firebase-config.js (the expected developer file)
-  const mod = await import('./firebase-config.js');
-  return mod.firebaseConfig;
+  try {
+    const mod = await import('./firebase-config.js');
+    return mod.firebaseConfig;
+  } catch (e) {
+    throw new Error('Firebase configuration could not be loaded. Please ensure infra/demo_database_config.json exists or create firebase-config.js');
+  }
 }
