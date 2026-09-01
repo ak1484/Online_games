@@ -7,6 +7,31 @@
     "couple_rooms": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "couples": {
+      "$coupleId": {
+        ".read": "auth != null",
+        ".write": "auth != null",
+        "members": {
+          "$memberUid": {
+            ".write": "auth != null && auth.uid === $memberUid"
+          }
+        },
+        "rooms": {
+          "$date": {
+            "photos": {
+              "$photoId": {
+                ".write": "auth != null && (!data.exists() || data.child('authorId').val() === auth.uid)"
+              }
+            },
+            "comments": {
+              "$commentId": {
+                ".write": "auth != null && (!data.exists() || data.child('authorId').val() === auth.uid)"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

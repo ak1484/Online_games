@@ -20,14 +20,38 @@
           <p class="subtitle">Our private photo diary & notes</p>
         </div>
       </div>
-      <div class="user-pill" id="user-profile">
-        <span class="avatar" id="user-avatar">👤</span>
-        <div class="user-info">
-          <input type="text" id="partner-nickname" placeholder="Your Name" title="Click to change your nickname" />
-          <span class="status-indicator online"></span>
+
+      <div class="header-right">
+        <!-- Space Info Pill with Copy Link -->
+        <div class="space-pill" id="space-pill" title="Click to manage space or share link">
+          <span class="lock-icon">🔒</span>
+          <span class="space-name-display" id="space-name-display">My Space</span>
+          <button id="copy-invite-btn" class="mini-btn" title="Copy Partner Invite Link">🔗 Invite</button>
         </div>
+
+        <!-- User Profile Pill -->
+        <button id="open-profile-btn" class="user-pill" title="Edit Profile & Space">
+          <span class="avatar" id="user-avatar-display">👤</span>
+          <span class="user-name-display" id="user-name-display">My Love</span>
+          <span class="edit-icon">⚙️</span>
+        </button>
       </div>
     </header>
+
+    <!-- Partners Status Bar -->
+    <div class="partners-bar" id="partners-bar">
+      <div class="partner-tag me">
+        <span class="avatar-sm" id="my-bar-avatar">👤</span>
+        <span class="name" id="my-bar-name">You</span>
+        <span class="status-dot online" title="You are online"></span>
+      </div>
+      <div class="partner-divider">💕</div>
+      <div class="partner-tag them" id="partner-status-tag">
+        <span class="avatar-sm" id="partner-bar-avatar">🤍</span>
+        <span class="name" id="partner-bar-name">Waiting for partner...</span>
+        <span class="status-dot offline" id="partner-status-dot" title="Partner status"></span>
+      </div>
+    </div>
 
     <!-- Date Room Navigation -->
     <nav class="date-navigator">
@@ -163,6 +187,105 @@
       <button id="close-lightbox-btn" class="lightbox-close">&times;</button>
       <img id="lightbox-img" src="" alt="Full view" />
       <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <!-- Setup / Couple Space Modal -->
+  <div id="setup-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Welcome to Daily Moments 💕</h2>
+      <p class="modal-subtitle">Create or join your couple's private space</p>
+
+      <div class="setup-tabs">
+        <button class="tab-btn active" data-tab="create">Create New</button>
+        <button class="tab-btn" data-tab="join">Join Existing</button>
+      </div>
+
+      <!-- Create Tab -->
+      <div id="create-tab" class="tab-pane active">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="setup-name" placeholder="e.g., Alex" maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label>Space Name (for you both)</label>
+          <input type="text" id="setup-space-name" placeholder="e.g., Our Moments, Alex & Sam" maxlength="40" />
+        </div>
+        <div class="form-group">
+          <label>Secret Passcode (at least 6 chars)</label>
+          <input type="password" id="setup-passcode" placeholder="Create a shared secret" minlength="6" />
+          <span class="input-hint">Share this with your partner to join your space</span>
+        </div>
+        <button id="setup-create-btn" class="primary-btn wide">Create My Space</button>
+      </div>
+
+      <!-- Join Tab -->
+      <div id="join-tab" class="tab-pane">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="join-name" placeholder="e.g., Sam" maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label>Partner's Passcode</label>
+          <input type="password" id="join-passcode" placeholder="Enter the shared passcode" minlength="6" />
+          <span class="input-hint">Ask your partner for the secret passcode</span>
+        </div>
+        <button id="setup-join-btn" class="primary-btn wide">Join Space</button>
+      </div>
+
+      <div id="setup-error" class="error-message hidden"></div>
+    </div>
+  </div>
+
+  <!-- Profile / Space Management Modal -->
+  <div id="profile-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Space & Profile</h2>
+        <button id="close-profile-modal" class="icon-btn">&times;</button>
+      </div>
+
+      <div class="profile-section">
+        <h3>Your Profile</h3>
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="profile-name" placeholder="Your name" maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label>Avatar Emoji</label>
+          <div class="emoji-picker">
+            <button type="button" class="emoji-select" data-emoji="😊">😊</button>
+            <button type="button" class="emoji-select" data-emoji="❤️">❤️</button>
+            <button type="button" class="emoji-select" data-emoji="🥰">🥰</button>
+            <button type="button" class="emoji-select" data-emoji="😘">😘</button>
+            <button type="button" class="emoji-select" data-emoji="💕">💕</button>
+            <button type="button" class="emoji-select" data-emoji="⭐">⭐</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3>Space Info</h3>
+        <p><strong>Space Name:</strong> <span id="profile-space-name">Loading...</span></p>
+        <p><strong>Space ID:</strong> <code id="profile-space-id">--</code></p>
+        <div class="form-group">
+          <label>Invite Link</label>
+          <div class="invite-row">
+            <input type="text" id="profile-invite-link" readonly />
+            <button id="profile-copy-btn" class="mini-btn">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <h3>Partner</h3>
+        <div id="partner-info" class="partner-info-card">
+          <p id="partner-info-text">Waiting for your partner to join...</p>
+        </div>
+      </div>
+
+      <button id="logout-btn" class="secondary-btn wide">Leave Space & Reset</button>
+      <button id="close-profile-btn" class="primary-btn wide">Done</button>
     </div>
   </div>
 
