@@ -764,17 +764,20 @@ async function init() {
     currentUser = userCredential.user;
     console.log('Authenticated:', currentUser.uid);
 
-// Check for shared space in URL BEFORE auth so we can redirect to login if needed
-const sharedSpace = getSpaceFromUrl();
-if (sharedSpace && !coupleId) {
-  // Store the intent to join this space so auth.js can pick it up
-  localStorage.setItem('pending_join_space', sharedSpace);
-  window.location.href = 'login.html';
-  return;
-} else if (!coupleId) {
-  window.location.href = 'login.html';
-  return;
-}
+    // Check for shared space in URL BEFORE auth so we can redirect to login if needed
+    const sharedSpace = getSpaceFromUrl();
+    if (sharedSpace && !coupleId) {
+      // Store the intent to join this space so auth.js can pick it up
+      localStorage.setItem('pending_join_space', sharedSpace);
+      window.location.href = 'login.html';
+      return;
+    } else if (!coupleId) {
+      window.location.href = 'login.html';
+      return;
+    }
+
+    // Now initialize the app with the couple space
+    await initializeApp();
   } catch (err) {
     console.error('Initialization error:', err);
     updateStatus(`Connection failed: ${err.message}`, 'error');
