@@ -183,10 +183,10 @@
 .primary-btn.wide {
   width: 100%;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   margin-top: 0.5rem;
   border: none;
-  color: #fff;
+  color: #fff !important;
   padding: 0.9rem 1.2rem;
   font-weight: 600;
   font-size: 0.95rem;
@@ -197,16 +197,25 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
 .primary-btn.wide:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%);
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%) !important;
+  color: #fff !important;
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
 }
 
 .primary-btn.wide:active {
   transform: translateY(0);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.primary-btn.wide:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .error-message {
