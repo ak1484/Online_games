@@ -340,6 +340,9 @@ async function setupCoupleSpace() {
 
   updateUIUserInfo();
 
+  // Set today's date first (this populates the UI)
+  setDate(new Date());
+
   // Subscribe to partner changes
   const membersRef = ref(db, `couples/${coupleId}/members`);
   onValue(membersRef, (snapshot) => {
