@@ -231,13 +231,23 @@ document.getElementById('profile-copy-btn').addEventListener('click', () => {
 });
 
 // Copy invite from header
-document.getElementById('copy-invite-btn').addEventListener('click', async () => {
-  const link = generateInviteLink(coupleId);
-  await navigator.clipboard.writeText(link);
-  const btn = document.getElementById('copy-invite-btn');
-  btn.textContent = '✓ Copied!';
-  setTimeout(() => btn.textContent = '🔗 Invite', 2000);
-});
+const copyInviteBtn = document.getElementById('copy-invite-btn');
+if (copyInviteBtn) {
+  copyInviteBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const link = generateInviteLink(coupleId);
+    try {
+      await navigator.clipboard.writeText(link);
+      const btn = document.getElementById('copy-invite-btn');
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = '🔗 Invite', 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      alert('Invite link: ' + link);
+    }
+  });
+}
 
 // Update profile name and avatar
 document.getElementById('profile-name').addEventListener('change', async (e) => {

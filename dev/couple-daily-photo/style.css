@@ -185,11 +185,28 @@
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   margin-top: 0.5rem;
+  border: none;
+  color: #fff;
+  padding: 0.9rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .primary-btn.wide:hover {
-  opacity: 0.9;
+  background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%);
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.primary-btn.wide:active {
+  transform: translateY(0);
 }
 
 .error-message {
@@ -214,9 +231,14 @@
 }
 
 .login-footer p {
-  color: #94a3b8;
+  color: #22c55e;
   font-size: 0.85rem;
   margin: 0.3rem 0;
+  font-weight: 500;
+}
+
+.login-footer p:last-child {
+  color: #16a34a;
 }
 
 /* Decorative shapes */
