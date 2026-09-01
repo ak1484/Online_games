@@ -1,5 +1,7 @@
 export async function loadFirebaseConfig() {
+  const repoName = '/Online_games'; // The GitHub Pages repo path
   const candidates = [
+    `${repoName}/infra/demo_database_config.json`, // Absolute path from root
     '../infra/demo_database_config.json',
     '/infra/demo_database_config.json',
     './infra/demo_database_config.json'
@@ -12,6 +14,7 @@ export async function loadFirebaseConfig() {
       const json = await resp.json();
       if (json && json.firebase) return json.firebase;
     } catch (e) {
+      console.warn(`Failed to fetch config from ${path}:`, e);
       // ignore and try next
     }
   }
