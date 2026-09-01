@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Moments 💕 | Private Couple Space</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+</head>
+<body class="login-page">
+  <div class="login-container">
+    <div class="login-hero">
+      <div class="hero-content">
+        <span class="hero-emoji">💖</span>
+        <h1>Daily Moments</h1>
+        <p class="hero-tagline">Your private sanctuary for love, memories, and shared moments together.</p>
+      </div>
+      <div class="hero-features">
+        <div class="feature-item">
+          <span class="feature-icon">📸</span>
+          <span>Share daily photos</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">💌</span>
+          <span>Send love notes</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🔒</span>
+          <span>100% private space</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">💕</span>
+          <span>Real-time sync</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-header">
+        <h2>Welcome Back 💕</h2>
+        <p>Create or join your couple's private space</p>
+      </div>
+
+      <div class="setup-tabs">
+        <button class="tab-btn active" data-tab="create">Create New Space</button>
+        <button class="tab-btn" data-tab="join">Join Existing</button>
+      </div>
+
+      <!-- Create Tab -->
+      <div id="create-tab" class="tab-pane active">
+        <div class="form-group">
+          <label for="setup-name">Your Name</label>
+          <input type="text" id="setup-name" placeholder="e.g., Alex" maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label for="setup-space-name">Space Name</label>
+          <input type="text" id="setup-space-name" placeholder="e.g., Our Moments, Alex & Sam" maxlength="40" />
+        </div>
+        <div class="form-group">
+          <label for="setup-passcode">Secret Passcode</label>
+          <input type="password" id="setup-passcode" placeholder="Create a shared secret (min 6 chars)" minlength="6" />
+          <span class="input-hint">Share this with your partner to join your space</span>
+        </div>
+        <button id="setup-create-btn" class="primary-btn wide">
+          <span>✨</span> Create Our Space
+        </button>
+      </div>
+
+      <!-- Join Tab -->
+      <div id="join-tab" class="tab-pane">
+        <div class="form-group">
+          <label for="join-name">Your Name</label>
+          <input type="text" id="join-name" placeholder="e.g., Sam" maxlength="30" />
+        </div>
+        <div class="form-group">
+          <label for="join-passcode">Partner's Passcode</label>
+          <input type="password" id="join-passcode" placeholder="Enter the shared passcode" minlength="6" />
+          <span class="input-hint">Ask your partner for the secret passcode</span>
+        </div>
+        <button id="setup-join-btn" class="primary-btn wide">
+          <span>💕</span> Join Space
+        </button>
+      </div>
+
+      <div id="setup-error" class="error-message hidden"></div>
+
+      <div class="login-footer">
+        <p>🔒 Your data is encrypted and private</p>
+        <p>No account needed • Completely free</p>
+      </div>
+    </div>
+
+    <!-- Decorative elements -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+    import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js';
+    import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+    import { loadFirebaseConfig } from './firebase-loader.js';
+
+    // Hash a passcode
+    async function hashPasscode(passcode) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(passcode);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 24);
+    }
+
+    let app = null;
+    let db = null;
+    let auth = null;
+    let currentUser = null;
+
+    // UI Elements
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const setupCreateBtn = document.getElementById('setup-create-btn');
+    const setupJoinBtn = document.getElementById('setup-join-btn');
+    const setupError = document.getElementById('setup-error');
+
+    function showError(message) {
+      setupError.textContent = message;
+      setupError.classList.remove('hidden');
+      setTimeout(() => setupError.classList.add('hidden'), 5000);
+    }
+
+    // Tab switching
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+        e.target.classList.add('active');
+        const tabName = e.target.dataset.tab;
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      });
+    });
+
+    // Create space
+    setupCreateBtn.addEventListener('click', async () => {
+      const name = document.getElementById('setup-name').value.trim();
+      const spaceName = document.getElementById('setup-space-name').value.trim();
+      const passcode = document.getElementById('setup-passcode').value;
+
+      if (!name || !spaceName || passcode.length < 6) {
+        showError('Please fill all fields. Passcode must be at least 6 characters.');
+        return;
+      }
+
+      setupCreateBtn.disabled = true;
+      setupCreateBtn.textContent = 'Creating...';
+
+      try {
+        const hashedId = await hashPasscode(passcode);
+
+        localStorage.setItem('couple_space_id', hashedId);
+        localStorage.setItem('couple_space_name', spaceName);
+        localStorage.setItem('couple_user_name', name);
+        localStorage.setItem('couple_user_avatar', '😊');
+
+        // Initialize couple profile
+        const coupleRef = ref(db, `couples/${hashedId}`);
+        await set(coupleRef, {
+          spaceName: spaceName,
+          createdAt: Date.now(),
+          members: {
+            [currentUser.uid]: {
+              name: name,
+              avatar: '😊',
+              joinedAt: Date.now()
+            }
+          }
+        });
+
+        window.location.href = 'index.html';
+      } catch (err) {
+        console.error('Create space error:', err);
+        showError('Failed to create space. Please try again.');
+        setupCreateBtn.disabled = false;
+        setupCreateBtn.textContent = 'Create Our Space';
+      }
+    });
+
+    // Join space
+    setupJoinBtn.addEventListener('click', async () => {
+      const name = document.getElementById('join-name').value.trim();
+      const passcode = document.getElementById('join-passcode').value;
+
+      if (!name || passcode.length < 6) {
+        showError('Please enter your name and the passcode.');
+        return;
+      }
+
+      setupJoinBtn.disabled = true;
+      setupJoinBtn.textContent = 'Joining...';
+
+      try {
+        const hashedId = await hashPasscode(passcode);
+
+        // Verify space exists
+        const coupleRef = ref(db, `couples/${hashedId}`);
+        const snapshot = await new Promise((resolve) => {
+          onValue(coupleRef, resolve, { onlyOnce: true });
+        });
+
+        if (!snapshot.exists()) {
+          showError('Invalid passcode or space does not exist.');
+          setupJoinBtn.disabled = false;
+          setupJoinBtn.textContent = 'Join Space';
+          return;
+        }
+
+        const coupleData = snapshot.val();
+        localStorage.setItem('couple_space_id', hashedId);
+        localStorage.setItem('couple_space_name', coupleData.spaceName);
+        localStorage.setItem('couple_user_name', name);
+        localStorage.setItem('couple_user_avatar', '❤️');
+
+        // Add self to couple members
+        const memberRef = ref(db, `couples/${hashedId}/members/${currentUser.uid}`);
+        await set(memberRef, {
+          name: name,
+          avatar: '❤️',
+          joinedAt: Date.now()
+        });
+
+        window.location.href = 'index.html';
+      } catch (err) {
+        console.error('Join space error:', err);
+        showError('Failed to join space. Please check your passcode.');
+        setupJoinBtn.disabled = false;
+        setupJoinBtn.textContent = 'Join Space';
+      }
+    });
+
+    // Initialize Firebase
+    async function initAuth() {
+      try {
+        const config = await loadFirebaseConfig();
+        app = initializeApp(config);
+        db = getDatabase(app);
+        auth = getAuth(app);
+
+        const userCredential = await signInAnonymously(auth);
+        currentUser = userCredential.user;
+        console.log('Authenticated:', currentUser.uid);
+      } catch (err) {
+        console.error('Auth error:', err);
+        showError('Connection failed. Please refresh and try again.');
+      }
+    }
+
+    initAuth();
+  </script>
+</body>
+</html>

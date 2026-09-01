@@ -754,19 +754,17 @@ async function init() {
     currentUser = userCredential.user;
     console.log('Authenticated:', currentUser.uid);
 
-    // Check for shared space in URL
-    const sharedSpace = getSpaceFromUrl();
-    if (sharedSpace && !coupleId) {
-      coupleId = sharedSpace;
-      document.getElementById('join-passcode').value = ''; // User will need to enter passcode
-      showSetupModal();
-      document.querySelectorAll('.tab-btn')[1].click(); // Switch to join tab
-    } else if (coupleId) {
-      initializeApp();
-      setDate(new Date());
-    } else {
-      showSetupModal();
-    }
+// Check for shared space in URL BEFORE auth so we can redirect to login if needed
+const sharedSpace = getSpaceFromUrl();
+if (sharedSpace && !coupleId) {
+  // Store the intent to join this space so auth.js can pick it up
+  localStorage.setItem('pending_join_space', sharedSpace);
+  window.location.href = 'login.html';
+  return;
+} else if (!coupleId) {
+  window.location.href = 'login.html';
+  return;
+}
   } catch (err) {
     console.error('Initialization error:', err);
     updateStatus(`Connection failed: ${err.message}`, 'error');
