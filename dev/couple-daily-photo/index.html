@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Daily Moments 💕 | Couple Photo Sharing</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="brand">
+        <span class="heart-icon">💖</span>
+        <div>
+          <h1>Daily Moments</h1>
+          <p class="subtitle">Our private photo diary & notes</p>
+        </div>
+      </div>
+      <div class="user-pill" id="user-profile">
+        <span class="avatar" id="user-avatar">👤</span>
+        <div class="user-info">
+          <input type="text" id="partner-nickname" placeholder="Your Name" title="Click to change your nickname" />
+          <span class="status-indicator online"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Date Room Navigation -->
+    <nav class="date-navigator">
+      <div class="nav-controls">
+        <button id="prev-day-btn" class="nav-btn" title="Previous Day">‹</button>
+
+        <div class="current-date-box">
+          <label for="date-picker-input" class="date-label">
+            <span class="calendar-icon">📅</span>
+            <span id="display-date">Today</span>
+          </label>
+          <div class="room-code-tag">Room: <strong id="current-room-code">--</strong></div>
+          <input type="date" id="date-picker-input" class="hidden-date-input" />
+        </div>
+
+        <button id="next-day-btn" class="nav-btn" title="Next Day">›</button>
+      </div>
+
+      <div class="quick-nav">
+        <button id="today-btn" class="chip-btn active">Today</button>
+        <button id="yesterday-btn" class="chip-btn">Yesterday</button>
+      </div>
+    </nav>
+
+    <!-- App Status Banner -->
+    <div id="status-banner" class="status-banner info">Connecting to your shared space...</div>
+
+    <!-- Main Content Area -->
+    <main class="content-grid">
+      <!-- Left / Top Column: Upload and Photos Feed -->
+      <section class="photos-section">
+        <div class="section-header">
+          <h2>Today's Photos <span id="photo-count-badge" class="badge">0</span></h2>
+          <button id="open-upload-btn" class="primary-btn">
+            <span>📷</span> Add Photo
+          </button>
+        </div>
+
+        <!-- Upload Modal / Collapsible Section -->
+        <div id="upload-panel" class="upload-panel hidden">
+          <div class="upload-card">
+            <div class="upload-card-header">
+              <h3>Upload Photo for <span id="upload-date-title">Today</span></h3>
+              <button id="close-upload-btn" class="icon-btn">&times;</button>
+            </div>
+
+            <div class="dropzone" id="dropzone">
+              <input type="file" id="photo-file-input" accept="image/*" class="file-input" />
+              <div id="dropzone-prompt" class="dropzone-prompt">
+                <span class="upload-icon">📸</span>
+                <p><strong>Click to browse</strong> or drag & drop a photo</p>
+                <span class="file-hint">Auto-compressed & stored free of charge</span>
+              </div>
+              <div id="image-preview-container" class="preview-container hidden">
+                <img id="image-preview" src="" alt="Preview" />
+                <button type="button" id="remove-preview-btn" class="remove-preview">&times;</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <input type="text" id="photo-caption-input" placeholder="Add a sweet caption or location... ✍️" maxlength="150" />
+            </div>
+
+            <div class="upload-actions">
+              <button id="cancel-upload-btn" class="secondary-btn">Cancel</button>
+              <button id="submit-photo-btn" class="primary-btn" disabled>
+                <span id="upload-btn-text">Share Photo 💕</span>
+                <span id="upload-spinner" class="spinner hidden"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Photos Stream List -->
+        <div id="photos-container" class="photos-stream">
+          <div class="empty-state">
+            <div class="empty-emoji">🖼️</div>
+            <h3>No photos shared for this day yet</h3>
+            <p>Be the first one to dump a memory or snap from today!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Comments & Notes -->
+      <section class="comments-section">
+        <div class="section-header">
+          <h2>Love Notes & Comments</h2>
+        </div>
+
+        <div class="comments-card">
+          <!-- Comments List -->
+          <div id="comments-list" class="comments-list">
+            <div class="empty-comments">
+              <p>No messages yet. Drop a sweet note below! 💌</p>
+            </div>
+          </div>
+
+          <!-- Quick Emoji Reactions -->
+          <div class="quick-reactions">
+            <button class="emoji-chip" data-emoji="❤️">❤️</button>
+            <button class="emoji-chip" data-emoji="🥰">🥰</button>
+            <button class="emoji-chip" data-emoji="📸">📸</button>
+            <button class="emoji-chip" data-emoji="✨">✨</button>
+            <button class="emoji-chip" data-emoji="😘">😘</button>
+            <button class="emoji-chip" data-emoji="🥂">🥂</button>
+          </div>
+
+          <!-- Comment Input Form -->
+          <form id="comment-form" class="comment-form">
+            <div class="input-wrap">
+              <input
+                type="text"
+                id="comment-input"
+                placeholder="Write a note..."
+                autocomplete="off"
+                maxlength="300"
+                required
+              />
+              <button type="submit" id="send-comment-btn" class="send-btn" title="Send Note">
+                💌
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Photo Fullscreen Lightbox Modal -->
+  <div id="lightbox-modal" class="lightbox-modal hidden">
+    <div class="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <button id="close-lightbox-btn" class="lightbox-close">&times;</button>
+      <img id="lightbox-img" src="" alt="Full view" />
+      <div id="lightbox-caption" class="lightbox-caption"></div>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

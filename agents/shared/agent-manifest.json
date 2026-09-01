@@ -1,0 +1,24 @@
+{
+  "agents": [
+    {
+      "name": "main-agent",
+      "role": "supervise progress, make decisions, and resolve blockers",
+      "outputs": ["decision-log.md", "task-log.md"]
+    },
+    {
+      "name": "orchestrator-agent",
+      "role": "manage SDLC, free hosting, DB/auth choice, and deployment readiness",
+      "outputs": ["workflow.md", "free-infra-guide.md"]
+    },
+    {
+      "name": "game-creator-agent",
+      "role": "create game prototypes, test locally, and document game development",
+      "outputs": ["backlog.md", "game-template.md"]
+    },
+    {
+      "name": "qa-agent",
+      "role": "optional quality review and release validation",
+      "outputs": ["qa-checklist.md"]
+    }
+  ]
+}
