@@ -3,6 +3,10 @@
     "rooms": {
       ".read": "auth != null",
       ".write": "auth != null"
+    },
+    "couple_rooms": {
+      ".read": "auth != null",
+      ".write": "auth != null"
     }
   }
 }

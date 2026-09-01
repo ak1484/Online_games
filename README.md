@@ -26,6 +26,7 @@ You can deploy it for free using GitHub Pages, Vercel, or Netlify.
 - GitHub Pages: site is available at `https://ak1484.github.io/Online_games/`
 - Single-player game: `https://ak1484.github.io/Online_games/dev/coin-collector/index.html`
 - Multiplayer prototype: `https://ak1484.github.io/Online_games/dev/multiplayer-room/index.html` - a turn-based click-to-claim room where each player claims cells in realtime.
+- Couple Daily Photo Sharing: `https://ak1484.github.io/Online_games/dev/couple-daily-photo/index.html` - date-based daily room photo sharing and notes for couples.
 - Vercel: import the repo and set the root directory to `dev/coin-collector`
 - Netlify: import the repo and publish from `dev/coin-collector`
 
