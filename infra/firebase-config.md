@@ -7,9 +7,9 @@ Use Firebase for free backend services, including realtime database, Firestore, 
 1. Open https://console.firebase.google.com and sign in with your Google account.
 2. Create a new Firebase project.
 3. Add a Web app to the project.
-4. Copy the Firebase config and place it in `dev/multiplayer-room/firebase-config.js`.
+4. Copy the Firebase config and place it in the appropriate game folder's firebase config file.
 5. Enable Authentication if you want player login using Email, Google, or anonymous sign-in.
-7. Enable Realtime Database for the current multiplayer prototype.
+7. Enable Realtime Database for multiplayer games as needed.
 
 ## Realtime Database rules example
 
@@ -37,7 +37,7 @@ Save it as `infra/firebase-rtdb-rules.json` and apply it in the Firebase Console
 ## Local file example
 
 ```js
-// dev/multiplayer-room/firebase-config.js
+// dev/[game-folder]/firebase-config.js
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT_ID.firebaseapp.com",

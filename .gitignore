@@ -18,7 +18,7 @@ Thumbs.db
 .env.*.local
 
 # Firebase config
-/dev/multiplayer-room/firebase-config.js
+
 /infra/demo_database_config.json
 
 # IDE

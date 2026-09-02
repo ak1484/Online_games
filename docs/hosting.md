@@ -7,7 +7,5 @@ Recommended options for free hosting:
 
 ## Confirmed working GitHub Pages URLs
 - Site: `https://ak1484.github.io/Online_games/`
-- Single-player game: `https://ak1484.github.io/Online_games/dev/coin-collector/index.html`
-- Multiplayer prototype: `https://ak1484.github.io/Online_games/dev/multiplayer-room/index.html`
 
 Choose the platform that best fits the game type and keep deployments lightweight.

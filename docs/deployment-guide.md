@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This project has a static HTML/CSS/JavaScript game in `dev/coin-collector`.
+This project has active game prototypes in the `dev/` folder.
 
 ## Option 1: GitHub Pages (free)
 1. Visit your repository on GitHub: `https://github.com/ak1484/Online_games`
@@ -8,16 +8,12 @@ This project has a static HTML/CSS/JavaScript game in `dev/coin-collector`.
 3. Set the source to `main` branch and choose `/ (root)`.
 4. Save the changes.
 5. Open the live site: `https://ak1484.github.io/Online_games/`
-6. Access the current games directly:
-   - `https://ak1484.github.io/Online_games/dev/coin-collector/index.html`
-   - `https://ak1484.github.io/Online_games/dev/multiplayer-room/index.html`
-
-If you prefer a cleaner URL, move or copy `dev/coin-collector` into a `docs/` folder and enable Pages from `main` branch `/docs`.
+6. Access the current games from the main site.
 
 ## Option 2: Vercel (free tier)
 1. Sign in at https://vercel.com with your GitHub account.
 2. Import the `ak1484/Online_games` repository.
-3. Set the root directory to `dev/coin-collector` if needed.
+3. Set the root directory to the specific game folder in `dev/` if needed.
 4. Deploy the project.
 5. Vercel will provide a preview URL, and you can configure a custom domain later.
 
@@ -25,7 +21,7 @@ If you prefer a cleaner URL, move or copy `dev/coin-collector` into a `docs/` fo
 1. Sign in at https://app.netlify.com with GitHub.
 2. Create a new site from Git.
 3. Select the `ak1484/Online_games` repository.
-4. Set the publish directory to `dev/coin-collector`.
+4. Set the publish directory to the specific game folder in `dev/`.
 5. Deploy and use the provided Netlify URL.
 
 ## Notes
