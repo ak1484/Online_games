@@ -681,14 +681,13 @@ function setupOnlineSync() {
         updateTurnIndicator();
       }
 
-      const previousRound = gameState.round;
-
       // Sync turn and round
       gameState.currentPlayer = data.currentTurn || 1;
       gameState.round = data.round || 1;
       gameState.picks = data.picks || { 1: 0, 2: 0 };
       gameState.matches = data.matches || 0;
       gameState.roundChoices = data.roundChoices || {};
+      gameState.questions = data.questions || gameState.questions;
       gameState.roundPickCount = data.roundPickCount || 0;
 
       updateTurnIndicator();
@@ -702,16 +701,11 @@ function setupOnlineSync() {
         enableOptions();
       } else {
         disableOptions();
-        // Show waiting message
-        const otherPlayer = gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2;
-        const questionTextEl = document.getElementById('question-text');
-        if (questionTextEl) {
-          questionTextEl.innerHTML = `<span class="waiting-text">Waiting for ${otherPlayer}...</span>`;
-        }
       }
 
       // Check for new question
-      if (data.currentQuestion && (!gameState.currentQuestion || data.round !== previousRound)) {
+      if (data.currentQuestion && (!gameState.currentQuestion ||
+          questionKey(data.currentQuestion) !== questionKey(gameState.currentQuestion))) {
         gameState.currentQuestion = data.currentQuestion;
         showOnlineQuestion(data.currentQuestion);
       }
@@ -724,6 +718,10 @@ function setupOnlineSync() {
 
     unsubscribers.push(unsubscribe);
   });
+}
+
+function questionKey(question) {
+  return question ? `${question.a}|${question.b}` : '';
 }
 
 function showOnlineQuestion(q) {
@@ -742,13 +740,13 @@ function showOnlineQuestion(q) {
     curveball: '🌀 Curveball!'
   };
 
-  questionCategory.textContent = catLabels[q.category] || '🎲';
-  questionCategory.className = 'question-category ' + (q.category === 'curveball' ? 'curveball' : '');
 
-  questionText.textContent = `${q.a} ... OR ... ${q.b}?`;
-  optionA.querySelector('.option-text').textContent = q.a;
-  optionB.querySelector('.option-text').textContent = q.b;
+    questionCategory.textContent = catLabels[q.category] || '🎲';
+    questionCategory.className = 'question-category ' + (q.category === 'curveball' ? 'curveball' : '');
 }
+    questionText.textContent = `${q.a} ... OR ... ${q.b}?`;
+    optionA.querySelector('.option-text').textContent = q.a;
+    optionB.querySelector('.option-text').textContent = q.b;
 
 function disableOptions() {
   optionA.disabled = true;
@@ -1142,37 +1140,30 @@ function handleGameEnd(data) {
 async function playAgain() {
   if (gameState.mode === 'online') {
     // Reset online game with FRESH questions
-    const { ref, update } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
+    const { runTransaction } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
 
-    // Generate completely fresh set of 5 unique questions
-    const freshQuestions = generateFreshQuestions();
+    // Only the first replay request creates the shared question set.
+    await runTransaction(gameRef, (currentData) => {
+      if (!currentData || currentData.status !== 'finished') return;
 
-    await update(gameRef, {
-      status: 'playing',
-      round: 1,
-      currentTurn: 1,
-      picks: { 1: 0, 2: 0 },
-      matches: 0,
-      roundChoices: {},
-      history: [],
-      questions: freshQuestions,
-      currentQuestion: freshQuestions[0],
-      roundPickCount: 0
+      const freshQuestions = generateFreshQuestions();
+      return {
+        ...currentData,
+        status: 'playing',
+        round: 1,
+        currentTurn: 1,
+        picks: { 1: 0, 2: 0 },
+        matches: 0,
+        roundChoices: {},
+        history: [],
+        questions: freshQuestions,
+        currentQuestion: freshQuestions[0],
+        roundPickCount: 0
+      };
     });
-
-    gameState.round = 1;
-    gameState.picks = { 1: 0, 2: 0 };
-    gameState.matches = 0;
-    gameState.roundChoices = {};
-    gameState.history = [];
-    gameState.currentPlayer = 1;
-    gameState.questions = freshQuestions;
-    gameState.totalRounds = 5;
-    gameState.roundPickCount = 0;
 
     showScreen('game');
     updateTurnIndicator();
-    showOnlineQuestion(freshQuestions[0]);
   } else {
     // Reset local game with FRESH questions
     gameState.round = 1;
