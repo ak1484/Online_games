@@ -138,7 +138,7 @@ let gameState = {
   player2: '',
   currentPlayer: 1,
   round: 1,
-  totalRounds: 10,
+  totalRounds: 5,
   category: 'all',
   questions: [],
   currentQuestion: null,
@@ -411,8 +411,10 @@ async function createOnlineGame() {
   gameId = code;
   gameRef = ref(db, `tot_games/${gameId}`);
 
-  // Build questions
+  // Build questions - shuffle and take 5
   const questions = buildQuestionPool();
+  shuffleArray(questions);
+  const limitedQuestions = questions.slice(0, 5);
 
   const gameData = {
     status: 'waiting',
@@ -426,9 +428,9 @@ async function createOnlineGame() {
     player2: null,
     currentTurn: 1,
     round: 1,
-    totalRounds: Math.min(10, questions.length),
+    totalRounds: 5,
     category: gameState.category,
-    questions: questions,
+    questions: limitedQuestions,
     currentQuestion: null,
     picks: { 1: 0, 2: 0 },
     history: [],
@@ -507,7 +509,11 @@ async function joinOnlineGame() {
     return;
   }
 
-  // Join as player 2
+  // Get the first question
+  const questions = gameData.questions || [];
+  const firstQuestion = questions[0] || null;
+
+  // Join as player 2 - set status to playing and set first question
   await update(gameRef, {
     player2: {
       id: currentUser.uid,
@@ -515,7 +521,9 @@ async function joinOnlineGame() {
       picks: 0,
       ready: true
     },
-    status: 'playing'
+    status: 'playing',
+    currentQuestion: firstQuestion,
+    currentTurn: 1
   });
 
   localStorage.setItem('tot_game_id', gameId);
@@ -531,7 +539,9 @@ async function joinOnlineGame() {
       picks: 0,
       ready: true
     },
-    status: 'playing'
+    status: 'playing',
+    currentQuestion: firstQuestion,
+    currentTurn: 1
   };
 
   // Start the game locally with updated data
@@ -623,19 +633,23 @@ function startOnlineGame(gameData, gId) {
   gameState.player1 = gameData.player1.name;
   gameState.player2 = gameData.player2?.name || 'Waiting...';
   gameState.round = gameData.round || 1;
-  gameState.totalRounds = gameData.totalRounds || 10;
+  gameState.totalRounds = gameData.totalRounds || 5;
   gameState.picks = gameData.picks || { 1: 0, 2: 0 };
   gameState.history = gameData.history || [];
   gameState.questions = gameData.questions || [];
   gameState.currentPlayer = gameData.currentTurn || 1;
   gameState.category = gameData.category || 'all';
 
+  // Set first question if not set
+  const firstQuestion = gameData.currentQuestion || gameState.questions[0] || null;
+  gameState.currentQuestion = firstQuestion;
+
   // Hide all screens, show game
   showScreen('game');
 
   setupOnlineSync();
   updateTurnIndicator();
-  showOnlineQuestion(gameData.currentQuestion);
+  showOnlineQuestion(firstQuestion);
 
   // Show connection status
   if (connectionStatus) {
@@ -750,7 +764,7 @@ async function leaveGame() {
     player2: '',
     currentPlayer: 1,
     round: 1,
-    totalRounds: 10,
+    totalRounds: 5,
     category: 'all',
     questions: [],
     currentQuestion: null,
@@ -781,7 +795,7 @@ function startLocalGame() {
   shuffleArray(gameState.questions);
 
   // Take first 10 (or less if not enough)
-  gameState.totalRounds = Math.min(10, gameState.questions.length);
+  gameState.totalRounds = Math.min(5, gameState.questions.length);
   gameState.questions = gameState.questions.slice(0, gameState.totalRounds);
 
   // Show game screen
@@ -1080,7 +1094,7 @@ function newPlayers() {
     player2: '',
     currentPlayer: 1,
     round: 1,
-    totalRounds: 10,
+    totalRounds: 5,
     category: 'all',
     questions: [],
     currentQuestion: null,

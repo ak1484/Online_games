@@ -163,7 +163,7 @@ A fun browser-based game where couples take turns picking between two options an
 
 ### Features
 - **2 Player Game**: Enter both names and take turns picking
-- **75+ Questions** across 5 categories plus curveballs:
+- **90+ Questions** across 5 categories plus curveballs:
   - 💕 Romantic
   - 😂 Silly
   - 🌈 Hypothetical
@@ -174,7 +174,7 @@ A fun browser-based game where couples take turns picking between two options an
   - **Local Co-op**: Both on the same device, take turns!
   - **Online Multiplayer**: Play from different devices! One player creates a game and shares a 4-letter code with their partner
 - **Fun Reasons**: Each pick requires explaining why (or skip!)
-- **10 Rounds Per Game**: Quick and replayable
+- **5 Rounds Per Game**: Quick and replayable
 
 ### How It Works - Local Mode
 1. Click "This or That" tab in the navigation
