@@ -965,17 +965,19 @@ async function submitOnlinePick() {
 
 function nextLocalTurn() {
   // Alternate players
-  gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
+  const wasPlayer1 = gameState.currentPlayer === 1;
+  gameState.currentPlayer = wasPlayer1 ? 2 : 1;
 
-  // If back to player 1, increment round
+  // Check if BOTH players have picked this round (we just switched back to player 1)
   if (gameState.currentPlayer === 1) {
+    // Both players have picked - move to next round
     gameState.round++;
-  }
 
-  // Check if game over
-  if (gameState.round > gameState.totalRounds) {
-    showResults();
-    return;
+    // Check if game over (after both players picked for round N)
+    if (gameState.round > gameState.totalRounds) {
+      showResults();
+      return;
+    }
   }
 
   updateTurnIndicator();
@@ -1061,10 +1063,10 @@ async function playAgain() {
     // Reset online game
     const { ref, update } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
 
-    // Rebuild questions
+    // Rebuild questions - fresh set of questions
     const questions = buildQuestionPool();
     shuffleArray(questions);
-    const limitedQuestions = questions.slice(0, gameState.totalRounds);
+    const limitedQuestions = questions.slice(0, 5); // Always 5 questions
 
     await update(gameRef, {
       status: 'playing',
@@ -1082,18 +1084,20 @@ async function playAgain() {
     gameState.history = [];
     gameState.currentPlayer = 1;
     gameState.questions = limitedQuestions;
+    gameState.totalRounds = 5;
     gameState.roundPickCount = 0;
   } else {
-    // Reset local game
+    // Reset local game - fresh questions
     gameState.round = 1;
     gameState.currentPlayer = 1;
     gameState.picks = { 1: 0, 2: 0 };
     gameState.history = [];
+    gameState.totalRounds = 5; // Always reset to 5 rounds
 
-    // Re-shuffle questions
-    gameState.questions = buildQuestionPool();
-    shuffleArray(gameState.questions);
-    gameState.questions = gameState.questions.slice(0, gameState.totalRounds);
+    // Build brand new question pool and shuffle
+    const freshQuestions = buildQuestionPool();
+    shuffleArray(freshQuestions);
+    gameState.questions = freshQuestions.slice(0, 5); // Take exactly 5 questions
 
     showScreen('game');
     updateTurnIndicator();
