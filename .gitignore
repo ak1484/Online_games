@@ -30,3 +30,6 @@ Thumbs.db
 
 # Misc
 *.tmp
+
+# Claude
+.claude/settings.local.json
