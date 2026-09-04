@@ -37,12 +37,10 @@
       ".read": "auth != null",
       ".write": "auth != null",
       "$gameId": {
-        // Allow anyone with valid auth to create new games
-        // Only players in the game can modify existing games
-        ".write": "auth != null && (data.exists() ? (data.child('player1/id').val() === auth.uid || data.child('player2/id').val() === auth.uid) : true)"
-      },
-      // Auto-expire old games after 24 hours
-      ".validate": "newData.hasChild('createdAt') || !newData.exists()"
+        // Creating new game: allowed (no data.exists())
+        // Modifying existing game: only if you're player1 or player2
+        ".write": "auth != null && (!data.exists() || data.child('player1/id').val() === auth.uid || data.child('player2/id').val() === auth.uid)"
+      }
     }
   }
 }

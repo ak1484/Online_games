@@ -521,10 +521,21 @@ async function joinOnlineGame() {
   localStorage.setItem('tot_game_id', gameId);
   localStorage.setItem('tot_player_name', playerName);
   gameState.playerNumber = 2;
-  gameState.player2 = playerName;
 
-  // Start the game locally
-  startOnlineGame(gameData, gameId);
+  // Create updated gameData with player2 info (since Firebase hasn't sent us the update yet)
+  const updatedGameData = {
+    ...gameData,
+    player2: {
+      id: currentUser.uid,
+      name: playerName,
+      picks: 0,
+      ready: true
+    },
+    status: 'playing'
+  };
+
+  // Start the game locally with updated data
+  startOnlineGame(updatedGameData, gameId);
 }
 
 async function joinGameById(id, playerName) {
