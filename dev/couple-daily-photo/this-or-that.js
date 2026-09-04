@@ -740,13 +740,12 @@ function showOnlineQuestion(q) {
     curveball: '🌀 Curveball!'
   };
 
-
-    questionCategory.textContent = catLabels[q.category] || '🎲';
-    questionCategory.className = 'question-category ' + (q.category === 'curveball' ? 'curveball' : '');
+  questionCategory.textContent = catLabels[q.category] || '🎲';
+  questionCategory.className = 'question-category ' + (q.category === 'curveball' ? 'curveball' : '');
+  questionText.textContent = `${q.a} ... OR ... ${q.b}?`;
+  optionA.querySelector('.option-text').textContent = q.a;
+  optionB.querySelector('.option-text').textContent = q.b;
 }
-    questionText.textContent = `${q.a} ... OR ... ${q.b}?`;
-    optionA.querySelector('.option-text').textContent = q.a;
-    optionB.querySelector('.option-text').textContent = q.b;
 
 function disableOptions() {
   optionA.disabled = true;
@@ -760,10 +759,11 @@ function enableOptions() {
 
 async function leaveGame() {
   // If we're player 1 and game is still waiting, delete it
-  if (gameRef && gameState.playerNumber === 1 && !gameState.started) {
+  const roomToDelete = gameRef;
+  if (roomToDelete && gameState.playerNumber === 1 && !gameState.started) {
     try {
-      const { ref, set, onValue } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
-      await set(gameRef, null);
+      const { set } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
+      await set(roomToDelete, null);
     } catch (e) {
       console.warn('Could not delete game:', e);
     }
