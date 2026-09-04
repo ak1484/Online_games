@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>This or That 💕</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+</head>
+<body class="this-or-that-page">
+  <div class="tot-container">
+    <!-- Header -->
+    <header class="tot-header">
+      <a href="index.html" class="back-btn">← Back</a>
+      <div class="tot-title">
+        <span class="tot-icon">🤔</span>
+        <h1>This or That</h1>
+      </div>
+      <div class="header-spacer"></div>
+    </header>
+
+    <!-- Mode Selection -->
+    <section id="mode-selection" class="tot-screen active">
+      <div class="setup-card">
+        <div class="setup-header">
+          <span class="setup-icon">👋</span>
+          <h2>How do you want to play?</h2>
+          <p>Grab your partner and let's pick sides!</p>
+        </div>
+
+        <div class="mode-cards">
+          <div class="mode-card" data-mode="local">
+            <span class="mode-icon">📱</span>
+            <h3>Local Co-op</h3>
+            <p>Both on the same device? Take turns!</p>
+          </div>
+          <div class="mode-card" data-mode="online">
+            <span class="mode-icon">🌐</span>
+            <h3>Online Multiplayer</h3>
+            <p>Play from different devices!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Local Mode Setup -->
+    <section id="local-section" class="tot-screen">
+      <div class="setup-card">
+        <div class="setup-header">
+          <span class="setup-icon">🎮</span>
+          <h2>Local Co-op Mode</h2>
+          <p>Enter your names and let's go!</p>
+        </div>
+
+        <div class="player-inputs">
+          <div class="player-setup">
+            <label>Player 1</label>
+            <input type="text" id="player1-name" placeholder="First name..." maxlength="20" />
+          </div>
+          <div class="vs-badge">VS</div>
+          <div class="player-setup">
+            <label>Player 2</label>
+            <input type="text" id="player2-name" placeholder="First name..." maxlength="20" />
+          </div>
+        </div>
+
+        <div class="category-select">
+          <p class="category-label">Pick your question vibe:</p>
+          <div class="category-chips">
+            <button class="cat-chip active" data-category="all">🎲 All</button>
+            <button class="cat-chip" data-category="romantic">💕 Romantic</button>
+            <button class="cat-chip" data-category="silly">😂 Silly</button>
+            <button class="cat-chip" data-category="hypothetical">🌈 Hypothetical</button>
+            <button class="cat-chip" data-category="hots">🔥 Hot Takes</button>
+            <button class="cat-chip" data-category="deep">🧠 Deep</button>
+          </div>
+        </div>
+
+        <button id="start-game-btn" class="primary-btn wide">Let's Go! 🚀</button>
+
+        <button id="back-to-mode-select" class="secondary-btn wide" style="margin-top: 1rem;">← Choose Mode</button>
+      </div>
+    </section>
+
+    <!-- Online Mode - Create or Join -->
+    <section id="join-section" class="tot-screen">
+      <div class="setup-card">
+        <div class="setup-header">
+          <span class="setup-icon">🌐</span>
+          <h2>Online Multiplayer</h2>
+          <p>Play with your partner from anywhere!</p>
+        </div>
+
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="player-name-input" placeholder="Your name..." maxlength="20" />
+        </div>
+
+        <div class="online-actions">
+          <button id="create-game-btn" class="primary-btn">Create Game 🎯</button>
+          <div class="online-divider">or join with code</div>
+          <div class="join-row">
+            <input type="text" id="join-code-input" placeholder="XXXX" maxlength="4" class="code-input" />
+            <button id="join-game-btn" class="secondary-btn">Join</button>
+          </div>
+        </div>
+
+        <button id="cancel-online-btn" class="secondary-btn wide" style="margin-top: 1.5rem;">← Choose Mode</button>
+      </div>
+    </section>
+
+    <!-- Waiting for Opponent -->
+    <section id="waiting-section" class="tot-screen">
+      <div id="waiting-card" class="setup-card">
+        <div class="setup-header">
+          <span class="waiting-icon">⏳</span>
+          <h2>Waiting for Partner...</h2>
+          <p>Share this code with your partner:</p>
+        </div>
+
+        <div class="code-display">
+          <span id="code-display">XXXX</span>
+          <button id="copy-code-btn" class="mini-btn">Copy</button>
+        </div>
+
+        <p id="waiting-text" class="waiting-hint">Tell them to join with the code above</p>
+
+        <button id="cancel-online-btn-2" class="secondary-btn wide" style="margin-top: 1.5rem;">Cancel</button>
+      </div>
+    </section>
+
+    <!-- Game Screen -->
+    <section id="game-screen" class="tot-screen">
+      <!-- Connection Status -->
+      <div id="connection-status" class="connection-status connected" style="display: none;">
+        🟢 Connected
+      </div>
+
+      <!-- Turn Indicator -->
+      <div class="turn-indicator">
+        <div class="turn-player" id="turn-player-1">
+          <span class="turn-avatar">👤</span>
+          <span class="turn-name">Player 1</span>
+          <span class="turn-label"></span>
+        </div>
+        <div class="turn-divider">💕</div>
+        <div class="turn-player" id="turn-player-2">
+          <span class="turn-avatar">👤</span>
+          <span class="turn-name">Player 2</span>
+          <span class="turn-label"></span>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="question-card">
+        <div class="question-category" id="question-category">Category</div>
+        <h2 class="question-text" id="question-text">This or That question here?</h2>
+      </div>
+
+      <!-- Options -->
+      <div class="options-container">
+        <button class="option-btn" id="option-a" data-option="a">
+          <span class="option-letter">A</span>
+          <span class="option-text">Option A</span>
+        </button>
+        <div class="option-divider">OR</div>
+        <button class="option-btn" id="option-b" data-option="b">
+          <span class="option-letter">B</span>
+          <span class="option-text">Option B</span>
+        </button>
+      </div>
+
+      <!-- Reason Modal -->
+      <div id="reason-modal" class="reason-modal hidden">
+        <div class="reason-card">
+          <div class="reason-header">
+            <span class="reason-icon">🗣️</span>
+            <h3 id="reason-prompt">Why did you pick?</h3>
+          </div>
+          <div class="reason-question">
+            <span class="reason-option" id="reason-option-text">Option</span>
+          </div>
+          <textarea id="reason-input" placeholder="Give us the hot take..." maxlength="300"></textarea>
+          <div class="reason-actions">
+            <button id="skip-reason-btn" class="secondary-btn">Skip 😅</button>
+            <button id="submit-reason-btn" class="primary-btn">Lock It In! 🔒</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Round Counter -->
+      <div class="round-counter">
+        Round <span id="round-number">1</span> of <span id="total-rounds">10</span>
+      </div>
+    </section>
+
+    <!-- Results Screen -->
+    <section id="results-screen" class="tot-screen">
+      <div class="results-card">
+        <div class="results-header">
+          <span class="results-icon">🏆</span>
+          <h2>Game Over!</h2>
+        </div>
+
+        <div class="final-score">
+          <div class="score-player" id="final-player-1">
+            <span class="score-name">Player 1</span>
+            <span class="score-picks" id="score-1-picks">0 picks</span>
+          </div>
+          <div class="score-divider">💕</div>
+          <div class="score-player" id="final-player-2">
+            <span class="score-name">Player 2</span>
+            <span class="score-picks" id="score-2-picks">0 picks</span>
+          </div>
+        </div>
+
+        <div class="fun-fact" id="fun-fact"></div>
+
+        <div class="results-actions">
+          <button id="play-again-btn" class="primary-btn">Play Again 🔄</button>
+          <button id="new-players-btn" class="secondary-btn">New Players</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="this-or-that.js"></script>
+</body>
+</html>

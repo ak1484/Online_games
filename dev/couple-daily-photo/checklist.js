@@ -92,6 +92,9 @@ async function init() {
     currentUser = userCredential.user;
     console.log('Authenticated:', currentUser.uid);
 
+    // Setup event delegation for checklist items
+    setupChecklistEventListeners();
+
     // Seed default items if needed
     await seedDefaultItems();
 
@@ -160,24 +163,34 @@ function renderChecklist() {
 
   emptyState.classList.add('hidden');
   container.innerHTML = items.map(item => createItemHTML(item)).join('');
+}
 
-  // Attach event listeners
-  container.querySelectorAll('.checklist-item').forEach(el => {
-    const itemId = el.dataset.id;
+// Event delegation for checklist items - more reliable than individual listeners
+function setupChecklistEventListeners() {
+  const container = document.getElementById('checklist-items');
+
+  container.addEventListener('click', (e) => {
+    const itemEl = e.target.closest('.checklist-item');
+    if (!itemEl) return;
+
+    const itemId = itemEl.dataset.id;
 
     // Checkbox click
-    el.querySelector('.item-checkbox').addEventListener('click', () => toggleItem(itemId));
+    if (e.target.closest('.item-checkbox')) {
+      toggleItem(itemId);
+      return;
+    }
 
     // Photo button click
-    const photoBtn = el.querySelector('.item-photos-btn');
-    if (photoBtn) {
-      photoBtn.addEventListener('click', () => openPhotoModal(itemId));
+    if (e.target.closest('.item-photos-btn')) {
+      openPhotoModal(itemId);
+      return;
     }
 
     // Delete button
-    const deleteBtn = el.querySelector('.item-delete');
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => deleteItem(itemId));
+    if (e.target.closest('.item-delete')) {
+      deleteItem(itemId);
+      return;
     }
   });
 }

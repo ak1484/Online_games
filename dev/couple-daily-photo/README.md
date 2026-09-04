@@ -14,6 +14,7 @@ A private daily photo diary and messaging space for couples.
 - **🔗 Invite Links**: Generate and share a link for your partner to join your private space.
 - **Partner Status Bar**: See your partner's name, avatar, and online status in real-time.
 - **💕 Love Checklist**: Track experiences together with a shared checklist - complete items and save up to 3 photos per memory!
+- **🤔 This or That**: A fun browser-based game where couples take turns picking between two options and explain their choice!
 
 ## Architecture
 - **Multi-page Layout**: Separate `login.html` for authentication and `index.html` for the main app
@@ -109,10 +110,12 @@ dev/couple-daily-photo/
 ├── login.html           # Authentication page (create/join space)
 ├── index.html           # Main app page (photos, messages, navigation)
 ├── checklist.html       # Love Checklist page
-├── checklist.js        # Checklist logic (Firebase sync, photo upload)
-├── script.js           # Main app logic (Firebase, real-time sync)
-├── style.css           # Unified styles for all pages
-├── firebase-loader.js  # Firebase config loader
+├── checklist.js         # Checklist logic (Firebase sync, photo upload)
+├── this-or-that.html    # This or That game page
+├── this-or-that.js      # This or That game logic
+├── script.js            # Main app logic (Firebase, real-time sync)
+├── style.css            # Unified styles for all pages
+├── firebase-loader.js   # Firebase config loader
 └── README.md           # This file
 ```
 
@@ -154,6 +157,43 @@ couples/
           {photoId}: base64ImageData
 ```
 
+## This or That 🤔
+
+A fun browser-based game where couples take turns picking between two options and explain their choice!
+
+### Features
+- **2 Player Game**: Enter both names and take turns picking
+- **75+ Questions** across 5 categories plus curveballs:
+  - 💕 Romantic
+  - 😂 Silly
+  - 🌈 Hypothetical
+  - 🔥 Hot Takes
+  - 🧠 Deep
+  - 🌀 Curveballs (extra spicy!)
+- **Two Play Modes**:
+  - **Local Co-op**: Both on the same device, take turns!
+  - **Online Multiplayer**: Play from different devices! One player creates a game and shares a 4-letter code with their partner
+- **Fun Reasons**: Each pick requires explaining why (or skip!)
+- **10 Rounds Per Game**: Quick and replayable
+
+### How It Works - Local Mode
+1. Click "This or That" tab in the navigation
+2. Choose "Local Co-op"
+3. Enter both player names
+4. Pick a category vibe (or go with All)
+5. Take turns picking A or B
+6. Explain your choice (or skip with a laugh emoji)
+7. See final scores and a fun fact!
+
+### How It Works - Online Multiplayer
+1. Click "This or That" tab in the navigation
+2. Choose "Online Multiplayer"
+3. Enter your name
+4. **Creating a game**: Click "Create Game" and share the 4-letter code with your partner
+5. **Joining a game**: Enter the code and click "Join"
+6. Take turns picking A or B on your own devices
+7. See final scores and a fun fact together!
+
 ## Firebase Setup (for developers)
 
 ### Config File
@@ -177,6 +217,8 @@ Deploy security rules from `../../infra/firebase-rtdb-rules.json` to your Fireba
 ```bash
 firebase deploy --only database
 ```
+
+The rules include the `tot_games` node for the This or That game - only authenticated users can play, and only the players in a game can modify it.
 
 ### Anonymous Authentication
 Enable Anonymous Authentication in Firebase Console:

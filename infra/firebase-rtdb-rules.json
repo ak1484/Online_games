@@ -32,6 +32,14 @@
           }
         }
       }
+    },
+    "tot_games": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "$gameId": {
+        // Only the players in the game can modify it
+        ".write": "auth != null && (data.child('player1/id').val() === auth.uid || data.child('player2/id').val() === auth.uid || !data.exists())"
+      }
     }
   }
 }
