@@ -270,11 +270,12 @@ function setupEventListeners() {
     });
   });
 
-  // Cancel online
-  const cancelOnlineBtn = document.getElementById('cancel-online-btn');
-  cancelOnlineBtn?.addEventListener('click', () => {
-    leaveGame();
-    showModeSelection();
+  // Cancel online (both cancel buttons)
+  document.querySelectorAll('[id^="cancel-online-btn"]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      leaveGame();
+      showModeSelection();
+    });
   });
 
   // Local mode - category selection
@@ -317,31 +318,44 @@ function setupEventListeners() {
 
 // ============ MODE SELECTION ============
 function selectMode(mode) {
-  document.getElementById('mode-selection').classList.add('hidden');
-  document.getElementById('local-section').classList.add('hidden');
-  document.getElementById('join-section').classList.add('hidden');
-  document.getElementById('waiting-section').classList.add('hidden');
+  // Hide all screens
+  ['mode-selection', 'local-section', 'join-section', 'waiting-section', 'game-screen', 'results-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('active');
+      el.classList.add('hidden');
+    }
+  });
 
   if (mode === 'local') {
     gameState.mode = 'local';
     document.getElementById('local-section').classList.remove('hidden');
+    document.getElementById('local-section').classList.add('active');
   } else {
     gameState.mode = 'online';
     document.getElementById('join-section').classList.remove('hidden');
+    document.getElementById('join-section').classList.add('active');
   }
 }
 
 function showModeSelection() {
+  // Hide all screens
+  ['mode-selection', 'local-section', 'join-section', 'waiting-section', 'game-screen', 'results-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('active');
+      el.classList.add('hidden');
+    }
+  });
+  // Show mode selection
   document.getElementById('mode-selection').classList.remove('hidden');
-  document.getElementById('local-section').classList.add('hidden');
-  document.getElementById('join-section').classList.add('hidden');
-  document.getElementById('waiting-section').classList.add('hidden');
+  document.getElementById('mode-selection').classList.add('active');
   cleanupFirebase();
 }
 
 // ============ FIREBASE HELPERS ============
 async function initFirebase() {
-  if (db) return;
+  if (db && auth && currentUser) return;
 
   const { loadFirebaseConfig } = await import('./firebase-loader.js');
   const config = await loadFirebaseConfig();
@@ -349,12 +363,18 @@ async function initFirebase() {
   const { getDatabase } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
   const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js');
 
-  app = initializeApp(config);
+  // Only initialize app once
+  if (!app) {
+    app = initializeApp(config);
+  }
   db = getDatabase(app);
   auth = getAuth(app);
 
-  await signInAnonymously(auth);
-  currentUser = auth.currentUser;
+  // Wait for auth to complete
+  if (!currentUser) {
+    const userCredential = await signInAnonymously(auth);
+    currentUser = userCredential.user;
+  }
 }
 
 function cleanupFirebase() {
@@ -374,7 +394,14 @@ async function createOnlineGame() {
     return;
   }
 
-  await initFirebase();
+  try {
+    await initFirebase();
+  } catch (err) {
+    console.error('Firebase init failed:', err);
+    alert('Failed to connect to Firebase. Make sure you have internet access and Firebase is configured correctly.');
+    return;
+  }
+
   const { ref, set } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
 
   // Generate 4-letter code
@@ -408,7 +435,13 @@ async function createOnlineGame() {
     createdAt: Date.now()
   };
 
-  await set(gameRef, gameData);
+  try {
+    await set(gameRef, gameData);
+  } catch (err) {
+    console.error('Failed to create game:', err);
+    alert('Failed to create game. Check Firebase rules are deployed and Anonymous Auth is enabled.');
+    return;
+  }
 
   // Save to localStorage
   localStorage.setItem('tot_game_id', gameId);
@@ -416,9 +449,17 @@ async function createOnlineGame() {
   gameState.playerNumber = 1;
   gameState.player1 = playerName;
 
-  // Show waiting screen
-  document.getElementById('join-section').classList.add('hidden');
+  // Show waiting screen - hide all, show waiting
+  ['mode-selection', 'local-section', 'join-section', 'waiting-section', 'game-screen', 'results-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('active');
+      el.classList.add('hidden');
+    }
+  });
   document.getElementById('waiting-section').classList.remove('hidden');
+  document.getElementById('waiting-section').classList.add('active');
+
   const codeDisplay = document.getElementById('code-display');
   codeDisplay.textContent = code;
 
@@ -578,12 +619,9 @@ function startOnlineGame(gameData, gId) {
   gameState.currentPlayer = gameData.currentTurn || 1;
   gameState.category = gameData.category || 'all';
 
-  // Hide setup, show game
-  document.getElementById('waiting-section')?.classList.add('hidden');
-  document.getElementById('join-section')?.classList.add('hidden');
-  document.getElementById('mode-selection')?.classList.add('hidden');
-
+  // Hide all screens, show game
   showScreen('game');
+
   setupOnlineSync();
   updateTurnIndicator();
   showOnlineQuestion(gameData.currentQuestion);
@@ -681,7 +719,17 @@ function enableOptions() {
   optionB.disabled = false;
 }
 
-function leaveGame() {
+async function leaveGame() {
+  // If we're player 1 and game is still waiting, delete it
+  if (gameRef && gameState.playerNumber === 1 && !gameState.started) {
+    try {
+      const { ref, set, onValue } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
+      await set(gameRef, null);
+    } catch (e) {
+      console.warn('Could not delete game:', e);
+    }
+  }
+
   cleanupFirebase();
   sessionStorage.removeItem('tot_game_id');
   gameState = {
@@ -1042,9 +1090,21 @@ function newPlayers() {
 
 // ============ SCREEN MANAGEMENT ============
 function showScreen(screen) {
-  setupScreen.classList.toggle('active', screen === 'setup');
-  gameScreen.classList.toggle('active', screen === 'game');
-  resultsScreen.classList.toggle('active', screen === 'results');
+  // Hide all screens
+  ['mode-selection', 'local-section', 'join-section', 'waiting-section', 'game-screen', 'results-screen'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('active');
+      el.classList.add('hidden');
+    }
+  });
+
+  // Show target screen
+  const targetEl = document.getElementById(screen + '-screen') || document.getElementById(screen);
+  if (targetEl) {
+    targetEl.classList.remove('hidden');
+    targetEl.classList.add('active');
+  }
 }
 
 // ============ UTILITIES ============

@@ -2199,6 +2199,10 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
+.tot-screen.hidden {
+  display: none;
+}
+
 /* Setup Screen */
 .setup-card {
   background: #fff;
