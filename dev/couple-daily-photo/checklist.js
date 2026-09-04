@@ -257,6 +257,7 @@ async function toggleItem(itemId) {
     });
 
     // Show celebration
+    selectedItemId = itemId;
     showCelebration(item.text);
   } else {
     // Unchecking - remove photos too
