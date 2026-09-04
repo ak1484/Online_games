@@ -2647,6 +2647,13 @@ body {
   font-size: 1.5rem;
 }
 
+.match-summary {
+  color: #881337;
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
 .fun-fact {
   background: #fffbeb;
   border: 1px solid #fde68a;

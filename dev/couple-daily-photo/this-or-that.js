@@ -144,6 +144,8 @@ let gameState = {
   currentQuestion: null,
   currentOption: null,
   picks: { 1: 0, 2: 0 },
+  matches: 0,
+  roundChoices: {},
   history: [],
   gameId: null,
   started: false,
@@ -432,6 +434,8 @@ async function createOnlineGame() {
     questions: gameQuestions,
     currentQuestion: null,
     picks: { 1: 0, 2: 0 },
+    matches: 0,
+    roundChoices: {},
     history: [],
     roundPickCount: 0,
     createdAt: Date.now()
@@ -632,12 +636,15 @@ function updateConnectionStatus(status) {
 
 function startOnlineGame(gameData, gId) {
   gameId = gId;
+  gameState.mode = 'online';
   gameState.started = true;
   gameState.player1 = gameData.player1.name;
   gameState.player2 = gameData.player2?.name || 'Waiting...';
   gameState.round = gameData.round || 1;
   gameState.totalRounds = gameData.totalRounds || 5;
   gameState.picks = gameData.picks || { 1: 0, 2: 0 };
+  gameState.matches = gameData.matches || 0;
+  gameState.roundChoices = gameData.roundChoices || {};
   gameState.history = gameData.history || [];
   gameState.questions = gameData.questions || [];
   gameState.currentPlayer = gameData.currentTurn || 1;
@@ -674,10 +681,14 @@ function setupOnlineSync() {
         updateTurnIndicator();
       }
 
+      const previousRound = gameState.round;
+
       // Sync turn and round
       gameState.currentPlayer = data.currentTurn || 1;
       gameState.round = data.round || 1;
       gameState.picks = data.picks || { 1: 0, 2: 0 };
+      gameState.matches = data.matches || 0;
+      gameState.roundChoices = data.roundChoices || {};
       gameState.roundPickCount = data.roundPickCount || 0;
 
       updateTurnIndicator();
@@ -700,8 +711,7 @@ function setupOnlineSync() {
       }
 
       // Check for new question
-      if (data.currentQuestion && (!gameState.currentQuestion ||
-          data.round !== gameState.round)) {
+      if (data.currentQuestion && (!gameState.currentQuestion || data.round !== previousRound)) {
         gameState.currentQuestion = data.currentQuestion;
         showOnlineQuestion(data.currentQuestion);
       }
@@ -952,10 +962,24 @@ async function submitReason() {
   // Hide modal
   reasonModal.classList.add('hidden');
 
+  recordRoundChoice();
+
   if (gameState.mode === 'online') {
     await submitOnlinePick();
   } else {
     nextLocalTurn();
+  }
+}
+
+function recordRoundChoice() {
+  gameState.roundChoices[gameState.round] = {
+    ...(gameState.roundChoices[gameState.round] || {}),
+    [gameState.currentPlayer]: gameState.currentOption
+  };
+
+  const choices = gameState.roundChoices[gameState.round];
+  if (choices[1] && choices[2] && choices[1] === choices[2]) {
+    gameState.matches++;
   }
 }
 
@@ -976,6 +1000,8 @@ async function submitOnlinePick() {
       await update(gameRef, {
         status: 'finished',
         picks: gameState.picks,
+        matches: gameState.matches,
+        roundChoices: gameState.roundChoices,
         history: gameState.history,
         round: gameState.round,
         roundPickCount: 0
@@ -989,6 +1015,8 @@ async function submitOnlinePick() {
         currentTurn: nextPlayer,
         currentQuestion: nextQuestion,
         picks: gameState.picks,
+        matches: gameState.matches,
+        roundChoices: gameState.roundChoices,
         history: gameState.history,
         roundPickCount: 0
       });
@@ -1002,6 +1030,8 @@ async function submitOnlinePick() {
     await update(gameRef, {
       currentTurn: nextPlayer,
       picks: gameState.picks,
+      matches: gameState.matches,
+      roundChoices: gameState.roundChoices,
       history: gameState.history,
       roundPickCount: currentPickCount
     });
@@ -1062,6 +1092,10 @@ function showResults() {
   finalPlayer2.querySelector('.score-name').textContent = gameState.player2;
   score1Picks.textContent = `${gameState.picks[1]} picks`;
   score2Picks.textContent = `${gameState.picks[2]} picks`;
+  const matchSummary = document.getElementById('match-summary');
+  if (matchSummary) {
+    matchSummary.textContent = `${gameState.matches || 0} / ${gameState.totalRounds} matched answers`;
+  }
 
   // Pick a random fun fact
   funFact.textContent = FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)];
@@ -1094,6 +1128,8 @@ function showResults() {
 
 function handleGameEnd(data) {
   gameState.picks = data.picks || { 1: 0, 2: 0 };
+  gameState.matches = data.matches || 0;
+  gameState.roundChoices = data.roundChoices || {};
   gameState.history = data.history || [];
   gameState.round = data.round || gameState.totalRounds;
 
@@ -1116,6 +1152,8 @@ async function playAgain() {
       round: 1,
       currentTurn: 1,
       picks: { 1: 0, 2: 0 },
+      matches: 0,
+      roundChoices: {},
       history: [],
       questions: freshQuestions,
       currentQuestion: freshQuestions[0],
@@ -1124,6 +1162,8 @@ async function playAgain() {
 
     gameState.round = 1;
     gameState.picks = { 1: 0, 2: 0 };
+    gameState.matches = 0;
+    gameState.roundChoices = {};
     gameState.history = [];
     gameState.currentPlayer = 1;
     gameState.questions = freshQuestions;
@@ -1132,12 +1172,14 @@ async function playAgain() {
 
     showScreen('game');
     updateTurnIndicator();
-    showLocalQuestion();
+    showOnlineQuestion(freshQuestions[0]);
   } else {
     // Reset local game with FRESH questions
     gameState.round = 1;
     gameState.currentPlayer = 1;
     gameState.picks = { 1: 0, 2: 0 };
+    gameState.matches = 0;
+    gameState.roundChoices = {};
     gameState.history = [];
     gameState.totalRounds = 5;
 
@@ -1165,6 +1207,8 @@ function newPlayers() {
     currentQuestion: null,
     currentOption: null,
     picks: { 1: 0, 2: 0 },
+    matches: 0,
+    roundChoices: {},
     history: [],
     gameId: null,
     started: false
