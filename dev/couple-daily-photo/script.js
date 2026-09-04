@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
 import { getDatabase, ref, set, push, onValue, remove, update, onDisconnect } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js';
-import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+import { getAuth, signInAnonymously, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 import { loadFirebaseConfig } from './firebase-loader.js';
 
 // ============ SECURE SPACE MANAGEMENT ============
@@ -274,11 +274,20 @@ if (copyInviteBtn) {
 
 // Update profile name and avatar
 document.getElementById('profile-name').addEventListener('change', async (e) => {
-  userName = e.target.value.trim() || userName;
+  const nextName = e.target.value.trim();
+  if (!nextName || !db || !coupleId || !currentUser) return;
+
+  userName = nextName;
   localStorage.setItem('couple_user_name', userName);
-  const memberRef = ref(db, `couples/${coupleId}/members/${currentUser.uid}`);
-  await update(memberRef, { name: userName });
   updateUIUserInfo();
+
+  try {
+    const memberRef = ref(db, `couples/${coupleId}/members/${currentUser.uid}`);
+    await update(memberRef, { name: userName });
+  } catch (err) {
+    console.error('Profile name update error:', err);
+    updateStatus('Could not update your name. Please try again.', 'error');
+  }
 });
 
 document.querySelectorAll('.emoji-select').forEach(btn => {
@@ -800,6 +809,7 @@ async function init() {
     app = initializeApp(config);
     db = getDatabase(app);
     auth = getAuth(app);
+    await setPersistence(auth, browserLocalPersistence);
 
     const userCredential = await signInAnonymously(auth);
     currentUser = userCredential.user;
