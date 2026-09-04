@@ -146,7 +146,8 @@ let gameState = {
   picks: { 1: 0, 2: 0 },
   history: [],
   gameId: null,
-  started: false
+  started: false,
+  roundPickCount: 0 // tracks how many picks in current round (for online sync)
 };
 
 // ============ DOM ELEMENTS ============
@@ -434,6 +435,7 @@ async function createOnlineGame() {
     currentQuestion: null,
     picks: { 1: 0, 2: 0 },
     history: [],
+    roundPickCount: 0,
     createdAt: Date.now()
   };
 
@@ -523,7 +525,8 @@ async function joinOnlineGame() {
     },
     status: 'playing',
     currentQuestion: firstQuestion,
-    currentTurn: 1
+    currentTurn: 1,
+    roundPickCount: 0
   });
 
   localStorage.setItem('tot_game_id', gameId);
@@ -541,7 +544,8 @@ async function joinOnlineGame() {
     },
     status: 'playing',
     currentQuestion: firstQuestion,
-    currentTurn: 1
+    currentTurn: 1,
+    roundPickCount: 0
   };
 
   // Start the game locally with updated data
@@ -639,6 +643,7 @@ function startOnlineGame(gameData, gId) {
   gameState.questions = gameData.questions || [];
   gameState.currentPlayer = gameData.currentTurn || 1;
   gameState.category = gameData.category || 'all';
+  gameState.roundPickCount = gameData.roundPickCount || 0;
 
   // Set first question if not set
   const firstQuestion = gameData.currentQuestion || gameState.questions[0] || null;
@@ -674,9 +679,11 @@ function setupOnlineSync() {
       gameState.currentPlayer = data.currentTurn || 1;
       gameState.round = data.round || 1;
       gameState.picks = data.picks || { 1: 0, 2: 0 };
+      gameState.roundPickCount = data.roundPickCount || 0;
 
       updateTurnIndicator();
       document.getElementById('round-number').textContent = gameState.round;
+      document.getElementById('total-rounds').textContent = gameState.totalRounds || 5;
 
       // Check if it's our turn
       const isMyTurn = gameState.currentPlayer === gameState.playerNumber;
@@ -794,7 +801,7 @@ function startLocalGame() {
   gameState.questions = buildQuestionPool();
   shuffleArray(gameState.questions);
 
-  // Take first 10 (or less if not enough)
+  // Take first 5 questions
   gameState.totalRounds = Math.min(5, gameState.questions.length);
   gameState.questions = gameState.questions.slice(0, gameState.totalRounds);
 
@@ -910,12 +917,13 @@ async function submitReason() {
 async function submitOnlinePick() {
   const { ref, update } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
 
-  // Check if round is complete (both players picked)
-  const currentRoundPicks = gameState.history.filter(h => h.round === gameState.round);
-  const roundComplete = currentRoundPicks.length >= 2;
+  // Increment round pick count
+  const currentPickCount = (gameState.roundPickCount || 0) + 1;
+  gameState.roundPickCount = currentPickCount;
 
-  if (roundComplete) {
-    // Move to next round
+  // Check if both players have picked (2 picks per round)
+  if (currentPickCount >= 2) {
+    // Round complete - move to next round
     const nextRound = gameState.round + 1;
 
     if (nextRound > gameState.totalRounds) {
@@ -924,10 +932,11 @@ async function submitOnlinePick() {
         status: 'finished',
         picks: gameState.picks,
         history: gameState.history,
-        round: gameState.round
+        round: gameState.round,
+        roundPickCount: 0
       });
     } else {
-      // Next round
+      // Next round - reset pick count
       const nextQuestion = gameState.questions[nextRound - 1];
       const nextPlayer = gameState.currentPlayer === 1 ? 2 : 1;
       await update(gameRef, {
@@ -935,8 +944,12 @@ async function submitOnlinePick() {
         currentTurn: nextPlayer,
         currentQuestion: nextQuestion,
         picks: gameState.picks,
-        history: gameState.history
+        history: gameState.history,
+        roundPickCount: 0
       });
+
+      // Reset local pick count
+      gameState.roundPickCount = 0;
     }
   } else {
     // Wait for other player
@@ -944,7 +957,8 @@ async function submitOnlinePick() {
     await update(gameRef, {
       currentTurn: nextPlayer,
       picks: gameState.picks,
-      history: gameState.history
+      history: gameState.history,
+      roundPickCount: currentPickCount
     });
   }
 }
@@ -1059,7 +1073,8 @@ async function playAgain() {
       picks: { 1: 0, 2: 0 },
       history: [],
       questions: limitedQuestions,
-      currentQuestion: limitedQuestions[0]
+      currentQuestion: limitedQuestions[0],
+      roundPickCount: 0
     });
 
     gameState.round = 1;
@@ -1067,6 +1082,7 @@ async function playAgain() {
     gameState.history = [];
     gameState.currentPlayer = 1;
     gameState.questions = limitedQuestions;
+    gameState.roundPickCount = 0;
   } else {
     // Reset local game
     gameState.round = 1;
