@@ -412,10 +412,8 @@ async function createOnlineGame() {
   gameId = code;
   gameRef = ref(db, `tot_games/${gameId}`);
 
-  // Build questions - shuffle and take 5
-  const questions = buildQuestionPool();
-  shuffleArray(questions);
-  const limitedQuestions = questions.slice(0, 5);
+  // Pre-select exactly 5 questions when room is created - this is the definitive question set for this game
+  const gameQuestions = generateFreshQuestions(); // Always exactly 5 unique questions
 
   const gameData = {
     status: 'waiting',
@@ -431,7 +429,7 @@ async function createOnlineGame() {
     round: 1,
     totalRounds: 5,
     category: gameState.category,
-    questions: limitedQuestions,
+    questions: gameQuestions,
     currentQuestion: null,
     picks: { 1: 0, 2: 0 },
     history: [],
@@ -452,6 +450,7 @@ async function createOnlineGame() {
   localStorage.setItem('tot_player_name', playerName);
   gameState.playerNumber = 1;
   gameState.player1 = playerName;
+  gameState.questions = gameQuestions; // Store locally too for reference
 
   // Show waiting screen - hide all, show waiting
   ['mode-selection', 'local-section', 'join-section', 'waiting-section', 'game-screen', 'results-screen'].forEach(id => {
@@ -797,13 +796,9 @@ function startLocalGame() {
   gameState.history = [];
   gameState.mode = 'local';
 
-  // Build question pool
-  gameState.questions = buildQuestionPool();
-  shuffleArray(gameState.questions);
-
-  // Take first 5 questions
-  gameState.totalRounds = Math.min(5, gameState.questions.length);
-  gameState.questions = gameState.questions.slice(0, gameState.totalRounds);
+  // Generate exactly 5 fresh unique questions for this game
+  gameState.questions = generateFreshQuestions();
+  gameState.totalRounds = 5; // Always exactly 5 rounds
 
   // Show game screen
   showScreen('game');
@@ -839,6 +834,16 @@ function showLocalQuestion() {
 }
 
 // ============ SHARED GAME LOGIC ============
+// Fisher-Yates shuffle for proper randomization
+function shuffleArray(array) {
+  const arr = [...array]; // Create a copy to avoid mutating original
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function buildQuestionPool() {
   const pool = [];
   const cats = gameState.category === 'all'
@@ -851,14 +856,54 @@ function buildQuestionPool() {
     }
   });
 
-  // Add 2-3 curveballs
+  // Add 2-3 curveballs (using our proper shuffle)
   const curveballCount = Math.min(3, Math.floor(pool.length / 5));
-  const shuffledCurveballs = [...CURVEBALLS].sort(() => Math.random() - 0.5);
+  const shuffledCurveballs = shuffleArray(CURVEBALLS);
   for (let i = 0; i < curveballCount; i++) {
     pool.push({ ...shuffledCurveballs[i], category: 'curveball' });
   }
 
   return pool;
+}
+
+function generateFreshQuestions() {
+  // Build a fresh pool and return exactly 5 UNIQUE questions
+  const pool = buildQuestionPool();
+  const shuffled = shuffleArray(pool);
+  const questions = shuffled.slice(0, 5);
+
+  // Safety check: ensure all 5 questions are unique
+  const seen = new Set();
+  const uniqueQuestions = [];
+  for (const q of questions) {
+    const key = q.a + '|' + q.b;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueQuestions.push(q);
+    }
+    if (uniqueQuestions.length >= 5) break;
+  }
+
+  // If somehow we don't have 5 unique, pad from pool
+  while (uniqueQuestions.length < 5) {
+    const q = pool[uniqueQuestions.length % pool.length];
+    const key = q.a + '|' + q.b;
+    if (!seen.has(key)) {
+      seen.add(key);
+      uniqueQuestions.push(q);
+    } else {
+      // Pick a random one from remaining pool
+      const randomIdx = Math.floor(Math.random() * pool.length);
+      const randomQ = pool[randomIdx];
+      const randomKey = randomQ.a + '|' + randomQ.b;
+      if (!seen.has(randomKey)) {
+        seen.add(randomKey);
+        uniqueQuestions.push(randomQ);
+      }
+    }
+  }
+
+  return uniqueQuestions;
 }
 
 function selectOption(option) {
@@ -1060,13 +1105,11 @@ function handleGameEnd(data) {
 
 async function playAgain() {
   if (gameState.mode === 'online') {
-    // Reset online game
+    // Reset online game with FRESH questions
     const { ref, update } = await import('https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js');
 
-    // Rebuild questions - fresh set of questions
-    const questions = buildQuestionPool();
-    shuffleArray(questions);
-    const limitedQuestions = questions.slice(0, 5); // Always 5 questions
+    // Generate completely fresh set of 5 unique questions
+    const freshQuestions = generateFreshQuestions();
 
     await update(gameRef, {
       status: 'playing',
@@ -1074,8 +1117,8 @@ async function playAgain() {
       currentTurn: 1,
       picks: { 1: 0, 2: 0 },
       history: [],
-      questions: limitedQuestions,
-      currentQuestion: limitedQuestions[0],
+      questions: freshQuestions,
+      currentQuestion: freshQuestions[0],
       roundPickCount: 0
     });
 
@@ -1083,21 +1126,23 @@ async function playAgain() {
     gameState.picks = { 1: 0, 2: 0 };
     gameState.history = [];
     gameState.currentPlayer = 1;
-    gameState.questions = limitedQuestions;
+    gameState.questions = freshQuestions;
     gameState.totalRounds = 5;
     gameState.roundPickCount = 0;
+
+    showScreen('game');
+    updateTurnIndicator();
+    showLocalQuestion();
   } else {
-    // Reset local game - fresh questions
+    // Reset local game with FRESH questions
     gameState.round = 1;
     gameState.currentPlayer = 1;
     gameState.picks = { 1: 0, 2: 0 };
     gameState.history = [];
-    gameState.totalRounds = 5; // Always reset to 5 rounds
+    gameState.totalRounds = 5;
 
-    // Build brand new question pool and shuffle
-    const freshQuestions = buildQuestionPool();
-    shuffleArray(freshQuestions);
-    gameState.questions = freshQuestions.slice(0, 5); // Take exactly 5 questions
+    // Generate brand new 5 unique questions
+    gameState.questions = generateFreshQuestions();
 
     showScreen('game');
     updateTurnIndicator();
@@ -1160,13 +1205,6 @@ function generateJoinCode() {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
-}
-
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
 }
 
 // ============ START ============
