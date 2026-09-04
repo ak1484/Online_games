@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Love Checklist 💕</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+</head>
+<body class="checklist-page">
+  <div class="checklist-container">
+    <!-- Header -->
+    <header class="checklist-header">
+      <a href="index.html" class="back-btn">← Back</a>
+      <div class="checklist-title">
+        <span class="heart-icon">💕</span>
+        <h1>Love Checklist</h1>
+      </div>
+      <div class="header-spacer"></div>
+    </header>
+
+    <!-- Progress Overview -->
+    <section class="progress-overview">
+      <div class="overall-progress">
+        <div class="progress-circle">
+          <svg viewBox="0 0 36 36" class="circular-chart">
+            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="circle-fill" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          </svg>
+          <span class="progress-text" id="overall-percent">0%</span>
+        </div>
+        <div class="progress-label">
+          <strong id="completed-count">0</strong> of <strong id="total-count">0</strong> completed
+        </div>
+      </div>
+      <div class="category-pills" id="category-pills">
+        <button class="category-pill active" data-category="all">All</button>
+        <button class="category-pill" data-category="fun">🎉 Fun</button>
+        <button class="category-pill" data-category="romantic">💕 Romantic</button>
+        <button class="category-pill" data-category="adventure">🌟 Adventure</button>
+        <button class="category-pill" data-category="everyday">✨ Everyday</button>
+        <button class="category-pill" data-category="dream">🌈 Dream</button>
+      </div>
+    </section>
+
+    <!-- Add Custom Item -->
+    <section class="add-item-section">
+      <div class="add-item-form">
+        <input type="text" id="new-item-text" placeholder="Add a custom checklist item..." maxlength="100"/>
+        <select id="new-item-category">
+          <option value="fun">🎉 Fun</option>
+          <option value="romantic">💕 Romantic</option>
+          <option value="adventure">🌟 Adventure</option>
+          <option value="everyday">✨ Everyday</option>
+          <option value="dream">🌈 Dream</option>
+        </select>
+        <button id="add-item-btn" class="primary-btn">+ Add</button>
+      </div>
+    </section>
+
+    <!-- Checklist Items -->
+    <section class="checklist-items" id="checklist-items">
+      <!-- Items loaded dynamically -->
+    </section>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-emoji">📋</div>
+      <h3>No items in this category</h3>
+      <p>Add your first checklist item above!</p>
+    </div>
+  </div>
+
+  <!-- Photo Modal for Completed Items -->
+  <div id="photo-modal" class="modal-overlay hidden">
+    <div class="modal-content photo-modal-content">
+      <div class="modal-header">
+        <h2 id="photo-modal-title">Add Memories</h2>
+        <button id="close-photo-modal" class="icon-btn">&times;</button>
+      </div>
+      <p class="photo-modal-subtitle">Share up to 3 photos for this memory</p>
+
+      <div class="photo-upload-area">
+        <div class="photo-grid" id="photo-grid">
+          <!-- Photo slots loaded dynamically -->
+        </div>
+      </div>
+
+      <div class="photo-actions">
+        <button id="save-photos-btn" class="primary-btn wide">Save Memories 💕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Celebration Modal -->
+  <div id="celebration-modal" class="modal-overlay hidden">
+    <div class="celebration-content">
+      <div class="celebration-emoji">🎉</div>
+      <h2>Love Completed!</h2>
+      <p id="celebration-item-text"></p>
+      <button id="close-celebration" class="primary-btn">Add Photos 📸</button>
+    </div>
+  </div>
+
+  <script type="module" src="checklist.js"></script>
+</body>
+</html>

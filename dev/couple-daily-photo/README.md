@@ -13,6 +13,7 @@ A private daily photo diary and messaging space for couples.
 - **Customizable Profiles**: Each partner can set their own name and emoji avatar.
 - **🔗 Invite Links**: Generate and share a link for your partner to join your private space.
 - **Partner Status Bar**: See your partner's name, avatar, and online status in real-time.
+- **💕 Love Checklist**: Track experiences together with a shared checklist - complete items and save up to 3 photos per memory!
 
 ## Architecture
 - **Multi-page Layout**: Separate `login.html` for authentication and `index.html` for the main app
@@ -107,10 +108,50 @@ python -m http.server 8080
 dev/couple-daily-photo/
 ├── login.html           # Authentication page (create/join space)
 ├── index.html           # Main app page (photos, messages, navigation)
-├── script.js            # Main app logic (Firebase, real-time sync)
-├── style.css            # Unified styles for both pages
-├── firebase-loader.js   # Firebase config loader
-└── README.md            # This file
+├── checklist.html       # Love Checklist page
+├── checklist.js        # Checklist logic (Firebase sync, photo upload)
+├── script.js           # Main app logic (Firebase, real-time sync)
+├── style.css           # Unified styles for all pages
+├── firebase-loader.js  # Firebase config loader
+└── README.md           # This file
+```
+
+## Love Checklist 💕
+
+Track experiences you've shared with your partner and save memories!
+
+### Features
+- **40+ Pre-made Items** across 5 categories: Fun, Romantic, Adventure, Everyday Magic, Dream Goals
+- **Custom Items**: Add your own checklist items
+- **Progress Tracking**: See overall completion percentage
+- **Category Filtering**: Filter by Fun, Romantic, Adventure, Everyday, or Dream
+- **Real-time Sync**: Both partners see updates instantly
+- **Photo Memories**: Completed items can have up to 3 photos attached
+- **Celebration Animation**: Confetti when you complete an item!
+
+### How It Works
+1. Click "Love Checklist" tab in the navigation
+2. Browse items by category or see all at once
+3. Check items when you complete them
+4. Add photos to completed memories
+5. Add custom items for things unique to your relationship
+
+### Checklist Firebase Structure
+```
+couples/
+  {coupleId}/
+    checklist/
+      {itemId}/
+        text: "Watch sunset together"
+        category: "romantic"
+        completed: true
+        completedAt: timestamp
+        completedBy: userId
+        isCustom: false
+        createdBy: userId
+        createdAt: timestamp
+        photos/
+          {photoId}: base64ImageData
 ```
 
 ## Firebase Setup (for developers)
